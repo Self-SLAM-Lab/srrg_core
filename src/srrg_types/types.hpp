@@ -18,7 +18,7 @@
  * Eigen types, common Mat opencv specializations, and transforms mappings
  */
 
-namespace srrg_types {
+namespace srrg_core {
 
   //!a vector of Vector3f with alignment
   typedef std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f> > Vector3fVector;
