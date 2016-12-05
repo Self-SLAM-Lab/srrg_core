@@ -3,3 +3,8 @@ target_link_libraries(srrg_txt_io_synchronizer_example
   srrg_system_utils_library
   srrg_txt_io_library
 )
+
+add_executable(srrg_kdtree_example srrg_kdtree_example.cpp)
+target_link_libraries(srrg_kdtree_example
+  srrg_system_utils_library
+)
