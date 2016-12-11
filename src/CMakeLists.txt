@@ -1,4 +1,5 @@
 add_subdirectory(srrg_types)
 add_subdirectory(srrg_system_utils)
 add_subdirectory(srrg_txt_io)
+add_subdirectory(srrg_distance_map)
 add_subdirectory(examples)

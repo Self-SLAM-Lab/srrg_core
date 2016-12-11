@@ -122,6 +122,33 @@ namespace srrg_core {
     return s;
   }
 
+
+  inline Eigen::Isometry2f v2t(const Eigen::Vector3f& t){
+    Eigen::Isometry2f T;
+    T.setIdentity();
+    T.translation()=t.head<2>();
+    float c = cos(t(2));
+    float s = sin(t(2));
+    T.linear() << c, -s, s, c;
+    return T;
+  }
+
+  inline Eigen::Vector3f t2v(const Eigen::Isometry2f& t){
+    Eigen::Vector3f v;
+    v.head<2>()=t.translation();
+    v(2) = atan2(t.linear()(1,0), t.linear()(0,0));
+    return v;
+  }
+
+
+  inline Eigen::Matrix2f skew(const Eigen::Vector2f& p){
+    Eigen::Matrix2f s;
+    s << 
+      0,  -p.y(),
+      p.x(), 0;
+    return s;
+  }
+
   /** \typedef UnsignedCharImage
    * \brief An unsigned char cv::Mat.
    */
