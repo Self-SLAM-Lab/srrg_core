@@ -35,7 +35,8 @@ namespace srrg_core {
       //! @param query: the point to search
       //! @param maximum distance allowed for a point
       //! @returns the distance of the closest point. -1 if no point found within range
-      virtual T findNeighbor(VectorTD& answer, 
+      virtual T findNeighbor(VectorTD& answer,
+			     int& index,
 			     const VectorTD& query, 
 			     const T max_distance) const = 0;
 
@@ -61,19 +62,23 @@ namespace srrg_core {
       //! @param maximum distance allowed for a point
       //! @returns the distance of the closest point. -1 if no point found within range
       virtual T findNeighbor(VectorTD& answer,
+			     int& index,
 			     const VectorTD& query, 
 			     const T max_distance) const {
 	T d_max = std::numeric_limits<T>::max();
 	const VectorTDVector& points=this->_tree->_points;
+	const std::vector<int>& indices=this->_tree->_indices;
 	for(size_t i = _min_index; i < _max_index; ++i) {
 	  T d = (points[i] - query).squaredNorm();
 	  if (d < d_max) {
 	    answer = points[i];
+	    index = indices[i];
 	    d_max = d;
 	  }
 	}
 
 	if (d_max > max_distance * max_distance) {
+	  index = -1;
 	  return -1;
 	}
 	return d_max;
@@ -163,14 +168,15 @@ namespace srrg_core {
       //! @param maximum distance allowed for a point
       //! @returns the distance of the closest point. -1 if no point found within range
       virtual T findNeighbor(VectorTD& answer,
+			     int& index,
 			     const VectorTD& query, 
 			     const T max_distance) const {
 	bool is_left = side(query);
 	if (is_left && _left_child) {
-	  return _left_child->findNeighbor(answer, query, max_distance);
+	  return _left_child->findNeighbor(answer, index, query, max_distance);
 	}
 	if (!is_left && _right_child) {
-	  return _right_child->findNeighbor(answer, query, max_distance);
+	  return _right_child->findNeighbor(answer, index, query, max_distance);
 	}
 	return -1;    
       }
@@ -186,9 +192,14 @@ namespace srrg_core {
     //! ctor
     KDTree(const VectorTDVector& points_,
 	   T max_leaf_range) {
+      _num_nodes = 0;
       _points = points_;
       _aux_points = points_;
-      _num_nodes = 0;
+      _indices.resize(points_.size());      
+      _aux_indices.resize(points_.size());
+      for(size_t i = 0; i < _indices.size(); ++i) {
+	_indices[i] = i;
+      }
       _root = _buildTree(0,
 			 points_.size(),
 			 max_leaf_range);
@@ -210,8 +221,9 @@ namespace srrg_core {
     //! @param maximum distance allowed for a point
     //! @returns the distance of the closest point. -1 if no point found within range
     inline T findNeighbor(VectorTD& answer,
+			  int& index, 
 			  const VectorTD& query, 
-			  const T max_distance) const { return _root->findNeighbor(answer, query, max_distance); }
+			  const T max_distance) const { return _root->findNeighbor(answer, index, query, max_distance); }
 
     inline void printKDTree() { _printKDTree(_root); }
     
@@ -229,31 +241,11 @@ namespace srrg_core {
     T _splitPoints(VectorTD& mean, VectorTD& normal,
 		   size_t& num_left_points,
 		   const size_t min_index, const size_t max_index) {
-      // if points empty, nothing to do
-      
+      // if points empty, nothing to do      
       if (min_index == max_index) {
 	return 0;
       }
 
-      // size_t num_points = max_index - min_index;
-      // // compute the mean;
-      // mean = VectorTD(D);
-      // mean.setZero();
-      // for(size_t i = min_index; i < max_index; ++i) {
-      // 	assert(_points[i].rows() == D); // sanity check
-      // 	mean += _points[i];
-      // }
-      // T inverse_num_points = 1.0 / num_points;
-      // mean *= inverse_num_points;
-
-      // // compute the covariance;
-      // Eigen::Matrix<T, D, D> covariance;
-      // covariance.setZero();
-      // for(size_t i = min_index; i < max_index; ++i) {
-      // 	VectorTD delta = _points[i] - mean;
-      // 	covariance += delta * delta.transpose();
-      // }
-      // covariance *= inverse_num_points;
       size_t num_points = max_index - min_index;
       T inverse_num_points = 1.0 / num_points;
       VectorTD sum = VectorTD::Zero();
@@ -289,18 +281,20 @@ namespace srrg_core {
 	bool side = distance_from_plane < 0;
 	if (side) {
 	  _aux_points[left_index] = _points[i];
+	  _aux_indices[left_index] = _indices[i];
 	  left_index++;
 	  num_left++;
 	} else {	  
 	  right_index--;
 	  _aux_points[right_index] = _points[i];
+	  _aux_indices[right_index] = _indices[i];
 	  num_right++;
 	}
       }
 
-      // assert(left_index == right_index && "left_index != right_index");
       for(size_t i = min_index; i < max_index; ++i) {
 	_points[i] = _aux_points[i];
+	_indices[i] = _aux_indices[i];
       }
 
       num_left_points = num_left;
@@ -368,7 +362,8 @@ namespace srrg_core {
     BaseTreeNode* _root;    
     VectorTDVector _aux_points;
     VectorTDVector _points;
-    
+    std::vector<int> _indices;
+    std::vector<int> _aux_indices;
   };
   
 }

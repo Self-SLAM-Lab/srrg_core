@@ -50,7 +50,8 @@ int main(int argc, char** argv) {
   for(int i = 0; i < num_queries; ++i) {
     KDTree<float, dim>::VectorTD query_point = kd_tree_queries[i];
     KDTree<float, dim>::VectorTD answer;
-    float approx_distance = kd_tree->findNeighbor(answer, query_point, max_distance);
+    int index;
+    float approx_distance = kd_tree->findNeighbor(answer, index, query_point, max_distance);
     if (approx_distance > 0) {
       found++;
     }
