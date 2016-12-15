@@ -173,14 +173,24 @@ namespace srrg_core {
    * \brief An int cv::Mat.
    */
   typedef cv::Mat_<int> IntImage;
-  
+
+  /** \typedef Int4Image
+   * \brief A 4D int cv::Mat.
+   */
+  typedef cv::Mat_<cv::Vec4i> Int4Image;
+
+  /** \typedef IntervalImage
+   * \brief A 4D int cv::Mat used to store intervals.
+   */
+  typedef Int4Image IntervalImage;
+
   /** \typedef FloatImage
    * \brief A float cv::Mat.
    */
   typedef cv::Mat_<float> FloatImage;
 
   /** \typedef Float3Image
-   * \brief A float cv::Mat.
+   * \brief A 3D float cv::Mat.
    */
   typedef cv::Mat_<cv::Vec3f> Float3Image;
 
