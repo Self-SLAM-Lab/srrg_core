@@ -125,7 +125,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS src
-  LIBRARIES srrg_system_utils_library srrg_txt_io_library
+  LIBRARIES srrg_system_utils_library srrg_txt_io_library srrg_distance_map_library
   CATKIN_DEPENDS srrg_boss
 #  DEPENDS system_lib
 )
