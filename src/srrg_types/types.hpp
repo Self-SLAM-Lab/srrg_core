@@ -141,6 +141,45 @@ namespace srrg_core {
   }
 
 
+  inline Eigen::Matrix3f Rx(float rot_x){
+    float c=cos(rot_x);
+    float s=sin(rot_x);
+    Eigen::Matrix3f R;
+    R << 1,  0, 0,
+      0,  c,  -s,
+      0,  s,  c;
+    return R;
+  }
+  
+  inline Eigen::Matrix3f Ry(float rot_y){
+    float c=cos(rot_y);
+    float s=sin(rot_y);
+    Eigen::Matrix3f R;
+    R << c,  0,  s,
+      0 , 1,  0,
+      -s,  0, c;
+    return R;
+  }
+
+  inline Eigen::Matrix3f Rz(float rot_z){
+    float c=cos(rot_z);
+    float s=sin(rot_z);
+    Eigen::Matrix3f R;
+    R << c,  -s,  0,
+      s,  c,  0,
+      0,  0,  1;
+    return R;
+  }
+
+  
+  inline Eigen::Isometry3f v2tEuler(const Vector6f& v){
+    Eigen::Isometry3f T;
+    T.linear()=Rx(v[3])*Ry(v[4])*Rz(v[5]);
+    T.translation()=v.head<3>();
+    return T;
+  }
+
+
   inline Eigen::Matrix2f skew(const Eigen::Vector2f& p){
     Eigen::Matrix2f s;
     s << 
