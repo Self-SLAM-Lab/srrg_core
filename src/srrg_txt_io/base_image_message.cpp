@@ -44,13 +44,20 @@ namespace srrg_core {
   }
 
   void BaseImageMessage::_fetch() {
-    std::string full_filename = binaryFullFilename();
-    std::string extension = full_filename.substr(full_filename.find_last_of(".") + 1);
-    if ( extension== "png" || extension=="ppm") {
+    const std::string& full_filename = binaryFullFilename();
+    const std::string& extension     = full_filename.substr(full_filename.find_last_of(".") + 1);
+    if (extension == "png" || extension =="ppm") {
       _image = cv::imread(full_filename.c_str(), CV_LOAD_IMAGE_COLOR);
       cv::cvtColor(_image, _image, CV_BGR2RGB);
-    } else
+    } else {
+#if CV_MAJOR_VERSION == 2
       _image = cv::imread(full_filename.c_str(), CV_LOAD_IMAGE_ANYDEPTH);
+#elif CV_MAJOR_VERSION == 3
+      _image = cv::imread(full_filename.c_str(), CV_LOAD_IMAGE_COLOR | CV_LOAD_IMAGE_ANYDEPTH);
+#else
+  #error OpenCV version not supported
+#endif
+    }
   }
   
   void BaseImageMessage::_release(){
