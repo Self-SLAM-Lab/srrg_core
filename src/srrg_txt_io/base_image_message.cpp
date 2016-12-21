@@ -50,13 +50,7 @@ namespace srrg_core {
       _image = cv::imread(full_filename.c_str(), CV_LOAD_IMAGE_COLOR);
       cv::cvtColor(_image, _image, CV_BGR2RGB);
     } else {
-#if CV_MAJOR_VERSION == 2
       _image = cv::imread(full_filename.c_str(), CV_LOAD_IMAGE_ANYDEPTH);
-#elif CV_MAJOR_VERSION == 3
-      _image = cv::imread(full_filename.c_str(), CV_LOAD_IMAGE_COLOR | CV_LOAD_IMAGE_ANYDEPTH);
-#else
-  #error OpenCV version not supported
-#endif
     }
   }
   

@@ -33,8 +33,21 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
-# Find OpenCV
-find_package(OpenCV)
+#ds OpenCV: we do not want to use the kinect opencv(3) package
+if("$ENV{ROS_DISTRO}" STREQUAL "kinetic")
+
+  #ds use our custom opencv
+  set(OpenCV_DIR "$ENV{HOME}/source/libraries/opencv/build/release")
+  find_package(OpenCV REQUIRED)
+  message("using custom OpenCV ${OpenCV_VERSION} (${OpenCV_DIR})")
+
+else()
+
+  #ds regular find (TODO enforce custom opencv installation?)
+  find_package(OpenCV REQUIRED)
+  message("using system OpenCV ${OpenCV_VERSION} (${OpenCV_DIR})")
+
+endif()
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 
