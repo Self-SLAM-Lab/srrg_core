@@ -16,21 +16,26 @@ namespace srrg_core {
 
   const std::string& PinholeImageMessage::tag() const { return _tag; }
 
-  void PinholeImageMessage::fromStream(std::istream& is) {
-    BaseImageMessage::fromStream(is);
-    for (int r =0; r<2; r++)
-      for (int c = 0; c<3; c++)
-	is >> _camera_matrix(r,c);
+  void PinholeImageMessage::fromStream(std::istream& is_) {
+    BaseImageMessage::fromStream(is_);
+
+    //ds deserialize camera matrix
+    for (int r =0; r < 2; r++)
+      for (int c = 0; c < 3; c++)
+        is_ >> _camera_matrix(r,c);
     _camera_matrix.row(2) << 0,0,1;
+
     _is_fetched = false;
   }
 
-  void PinholeImageMessage::toStream(std::ostream& os) const {
-    BaseImageMessage::toStream(os);
-    os << " ";
-    for (int r =0; r<2; r++)
-      for (int c = 0; c<3; c++)
-	os << _camera_matrix(r,c) << " "; 
+  void PinholeImageMessage::toStream(std::ostream& os_) const {
+    BaseImageMessage::toStream(os_);
+    os_ << " ";
+
+    //ds serialize camera matrix
+    for (int r =0; r < 2; r++)
+      for (int c = 0; c < 3; c++)
+        os_ << _camera_matrix(r,c) << " ";
   }
 
   static MessageFactory::MessageRegisterer<PinholeImageMessage> registerer;
