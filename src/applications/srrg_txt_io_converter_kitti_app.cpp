@@ -1,20 +1,22 @@
 #include <fstream>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "srrg_types/defs.h"
 #include "srrg_txt_io/pinhole_image_message.h"
+#include "srrg_types/defs.h"
 
-//ds typedefs TODO merge once possible
-typedef double real_precision;
-typedef Eigen::Transform<real_precision, 3, Eigen::Isometry> TransformMatrix3D;
-typedef Eigen::Matrix<real_precision, 3, 3> CameraMatrix;
-typedef Eigen::Matrix<real_precision, 3, 4> ProjectionMatrix;
-typedef Eigen::Matrix<real_precision, 3, 1> Vector3;
+using namespace srrg_core;
+
+//ds desired precision
+typedef float real;
+typedef Eigen::Matrix<real, 3, 3> CameraMatrix;
+typedef Eigen::Matrix<real, 3, 1> Vector3;
+typedef Eigen::Matrix<real, 3, 4> ProjectionMatrix;
+typedef Eigen::Transform<real, 3, Eigen::Isometry> TransformMatrix3D;
 
 //ds compact KITTI data structure
 struct MessageKITTI {
 
-    MessageKITTI(const real_precision& timestamp_,
+    MessageKITTI(const double& timestamp_,
                  const uint64_t& sequence_number_,
                  const TransformMatrix3D& pose_,
                  const std::string& filename_image_left_,
@@ -24,7 +26,7 @@ struct MessageKITTI {
                                                             filename_image_left(filename_image_left_),
                                                             filename_image_right(filename_image_right_) {}
 
-    real_precision timestamp;
+    double timestamp;
     uint64_t sequence_number;
     TransformMatrix3D pose;
     std::string filename_image_left;
@@ -71,7 +73,9 @@ int32_t main(int32_t argc, char** argv) {
   std::ifstream file_ground_truth(filename_ground_truth.c_str());
   std::ifstream file_timestamps(filename_timestamps.c_str());
   std::ifstream file_calibration(filename_calibration.c_str());
-  std::ofstream file_txt_io(filename_txt_io.c_str());
+
+  //ds ground truth is optional
+  bool is_ground_truth_available = true;
 
   //ds validate files
   if (!file_images_left.good() || !file_images_left.is_open()) {
@@ -83,8 +87,8 @@ int32_t main(int32_t argc, char** argv) {
     return 0;
   }
   if (!file_ground_truth.good() || !file_ground_truth.is_open()) {
-    std::cerr << "ERROR: unable to open source for ground truth: " << filename_ground_truth << std::endl;
-    return 0;
+    std::cerr << "WARNING: unable to open source for ground truth: " << filename_ground_truth << std::endl;
+    is_ground_truth_available = false;
   }
   if (!file_timestamps.good() || !file_timestamps.is_open()) {
     std::cerr << "ERROR: unable to open source for timestamps: " << filename_timestamps << std::endl;
@@ -94,14 +98,19 @@ int32_t main(int32_t argc, char** argv) {
     std::cerr << "ERROR: unable to open source for calibration: " << filename_calibration << std::endl;
     return 0;
   }
-  if (!file_txt_io.good() || !file_txt_io.is_open()) {
-    std::cerr << "ERROR: unable to create message file: " << filename_txt_io << std::endl;
-    return 0;
-  }
 
   //ds attempt to create the image directory - and check for failure
   if (mkdir(folder_txt_io_images.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0) {
-    std::cerr << "ERROR: unable to create image directory: " << folder_txt_io_images << std::endl;
+    std::cerr << "ERROR: unable to create image directory: " << folder_txt_io_images << " (maybe already existing?)" << std::endl;
+    return 0;
+  }
+
+  //ds open outfile with high precision
+  std::ofstream file_txt_io(filename_txt_io.c_str());
+  file_txt_io.precision(7);
+  //file_txt_io.setf(std::ios::fixed, std::ios::floatfield);
+  if (!file_txt_io.good() || !file_txt_io.is_open()) {
+    std::cerr << "ERROR: unable to create message file: " << filename_txt_io << std::endl;
     return 0;
   }
 
@@ -117,13 +126,35 @@ int32_t main(int32_t argc, char** argv) {
   std::getline(file_calibration, buffer_projection_matrix_camera_left);
   std::getline(file_calibration, buffer_projection_matrix_camera_right);
 
-  //ds fill both matrices
+  //ds fill both matrices TODO unify in function
   std::istringstream istream_projection_matrix_camera_left(buffer_projection_matrix_camera_left);
   std::string camera_name_left("");
   istream_projection_matrix_camera_left >> camera_name_left;
   for (uint8_t u = 0; u < 3; ++u ) {
     for (uint8_t v = 0; v < 4; ++v ) {
-      istream_projection_matrix_camera_left >> projection_matrix_camera_left(u,v);
+
+      //ds parse string value (since stringstream is messing up digits..)
+      std::string value_string("");
+      istream_projection_matrix_camera_left >> value_string;
+      const std::string::size_type index_exponent_begin(value_string.find('+'));
+      if (index_exponent_begin == std::string::npos) {
+        std::cerr << "ERROR: invalid calibration file" << std::endl;
+        return 0;
+      }
+
+      //ds derive value
+      const double value_base     = strtod(value_string.substr(0, index_exponent_begin-1).c_str(), 0);
+      const double value_exponent = strtod(value_string.substr(index_exponent_begin+1).c_str(), 0);
+      const real value_final    = value_base*pow(10,value_exponent);
+
+      //ds fix the last two digits of the final value (unnecessary for double precision)
+      const double delta_precision = std::abs(value_final-value_base*pow(10,value_exponent));
+      if (delta_precision > 0) {
+        std::cerr << "WARNING: precision delta detected (recommended to use double precision)" << std::endl;
+      }
+
+      //ds set value
+      projection_matrix_camera_left(u,v) = value_final;
     }
   }
   std::istringstream istream_projection_matrix_camera_right(buffer_projection_matrix_camera_right);
@@ -131,7 +162,29 @@ int32_t main(int32_t argc, char** argv) {
   istream_projection_matrix_camera_right >> camera_name_right;
   for (uint8_t u = 0; u < 3; ++u ) {
     for (uint8_t v = 0; v < 4; ++v ) {
-      istream_projection_matrix_camera_right >> projection_matrix_camera_right(u,v);
+
+      //ds parse string value (since stringstream is messing up digits..)
+      std::string value_string("");
+      istream_projection_matrix_camera_right >> value_string;
+      const std::string::size_type index_exponent_begin(value_string.find('+'));
+      if (index_exponent_begin == std::string::npos) {
+        std::cerr << "ERROR: invalid calibration file" << std::endl;
+        return 0;
+      }
+
+      //ds derive value
+      const double value_base     = strtod(value_string.substr(0, index_exponent_begin-1).c_str(), 0);
+      const double value_exponent = strtod(value_string.substr(index_exponent_begin+1).c_str(), 0);
+      const real value_final    = value_base*pow(10,value_exponent);
+
+      //ds fix the last two digits of the final value (unnecessary for double precision)
+      const double delta_precision = std::abs(value_final-value_base*pow(10,value_exponent));
+      if (delta_precision > 0) {
+        std::cerr << "WARNING: precision delta detected (recommended to use double precision)" << std::endl;
+      }
+
+      //ds set value
+      projection_matrix_camera_right(u,v) = value_final;
     }
   }
 
@@ -141,22 +194,18 @@ int32_t main(int32_t argc, char** argv) {
 
   //ds verify consistency
   if ((camera_matrix_left-camera_matrix_right).norm() != 0) {
-    std::cerr << "ERROR: invalid calibration" << std::endl;
+    std::cerr << "ERROR: invalid calibration, imprecise camera matrices" << std::endl;
   }
 
   //ds compute offset
-  const Vector3 offset(camera_matrix_right.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(projection_matrix_camera_right.block<3,1>(0,3)));
+  const Vector3 offset(camera_matrix_right.fullPivLu().solve(projection_matrix_camera_right.block<3,1>(0,3)));
   TransformMatrix3D robot_to_camera_right(TransformMatrix3D::Identity());
+  robot_to_camera_right.translation() = offset;
 
-  //ds precision thresholding (values very close to zero become zero)
-  if (offset.x() > 1e-10 || offset.x() < -1e-10) {
-    robot_to_camera_right.translation().x() = offset.x();
-  }
-  if (offset.y() > 1e-10 || offset.y() < -1e-10) {
-    robot_to_camera_right.translation().y() = offset.y();
-  }
-  if (offset.z() > 1e-10 || offset.z() < -1e-10) {
-    robot_to_camera_right.translation().z() = offset.z();
+  //ds check relative error
+  if ((camera_matrix_right*robot_to_camera_right.translation() - projection_matrix_camera_right.block<3,1>(0,3)).norm()/projection_matrix_camera_right.block<3,1>(0,3).norm() > 0) {
+    std::cerr << "ERROR: invalid calibration, imprecision risk" << std::endl;
+    return 0;
   }
 
   //ds KITTI data preparation
@@ -164,28 +213,47 @@ int32_t main(int32_t argc, char** argv) {
   std::string buffer_pose("");
   std::string buffer_timestamp("");
 
-  //ds start reading the files: ground truth/timestamps in parallel
-  while (std::getline(file_ground_truth, buffer_pose)   &&
-         std::getline(file_timestamps, buffer_timestamp)) {
+  //ds if we have a ground truth
+  if (is_ground_truth_available) {
 
-    //ds parse the pose
-    std::istringstream istream_pose(buffer_pose);
-    TransformMatrix3D pose(TransformMatrix3D::Identity());
-    for (uint8_t u = 0; u < 3; ++u) {
-      for (uint8_t v = 0; v < 4; ++v) {
-        istream_pose >> pose(u,v);
+    //ds start reading the files: ground truth/timestamps in parallel
+    while (std::getline(file_ground_truth, buffer_pose)   &&
+           std::getline(file_timestamps, buffer_timestamp)) {
+
+      //ds parse the pose
+      std::istringstream istream_pose(buffer_pose);
+      TransformMatrix3D pose(TransformMatrix3D::Identity());
+      for (uint8_t u = 0; u < 3; ++u) {
+        for (uint8_t v = 0; v < 4; ++v) {
+          istream_pose >> pose(u,v);
+        }
       }
+
+      //ds generate image numbers
+      char buffer_image_number[7];
+      const uint64_t& sequence_number = messages_kitti.size();
+      std::sprintf(buffer_image_number, "%06lu", sequence_number);
+      std::string filename_image_left(filename_images_left+"/"+buffer_image_number+".png");
+      std::string filename_image_right(filename_images_right+"/"+buffer_image_number+".png");
+
+      //ds save the message
+      messages_kitti.push_back(MessageKITTI(strtod(buffer_timestamp.c_str(), 0), sequence_number, pose, filename_image_left, filename_image_right));
     }
+  } else {
 
-    //ds generate image numbers
-    char buffer_image_number[7];
-    const uint64_t& sequence_number = messages_kitti.size();
-    std::sprintf(buffer_image_number, "%06lu", sequence_number);
-    std::string filename_image_left(filename_images_left+"/"+buffer_image_number+".png");
-    std::string filename_image_right(filename_images_right+"/"+buffer_image_number+".png");
+      //ds start reading the timestamp file
+      while (std::getline(file_timestamps, buffer_timestamp)) {
 
-    //ds save the message
-    messages_kitti.push_back(MessageKITTI(strtod(buffer_timestamp.c_str(), 0), sequence_number, pose, filename_image_left, filename_image_right));
+        //ds generate image numbers
+        char buffer_image_number[7];
+        const uint64_t& sequence_number = messages_kitti.size();
+        std::sprintf(buffer_image_number, "%06lu", sequence_number);
+        std::string filename_image_left(filename_images_left+"/"+buffer_image_number+".png");
+        std::string filename_image_right(filename_images_right+"/"+buffer_image_number+".png");
+
+        //ds save the message
+        messages_kitti.push_back(MessageKITTI(strtod(buffer_timestamp.c_str(), 0), sequence_number, TransformMatrix3D::Identity(), filename_image_left, filename_image_right));
+    }
   }
 
   //ds close all infiles
@@ -193,12 +261,11 @@ int32_t main(int32_t argc, char** argv) {
   file_images_right.close();
   file_ground_truth.close();
   file_timestamps.close();
+  file_calibration.close();
   std::cerr << "loaded messages: " << messages_kitti.size() << std::endl;
 
   //ds generate txt_io messages
   std::cerr << "generating txt_io messages and images: " << std::endl;
-  std::cerr << "8";
-  srand(time(0));
   for (std::vector<MessageKITTI>::const_iterator message = messages_kitti.begin(); message != messages_kitti.end(); ++message) {
 
     //ds buffer left and right image
@@ -224,9 +291,13 @@ int32_t main(int32_t argc, char** argv) {
     message_left.setImage(image_left);
     message_right.setImage(image_right);
 
-    //ds set poses
-    message_left.setOdometry(message->pose.cast<float>());
-    message_right.setOdometry(message->pose.cast<float>());
+    //ds if the ground truth is available
+    if (is_ground_truth_available) {
+
+      //ds set poses
+      message_left.setOdometry(message->pose.cast<float>());
+      message_right.setOdometry(message->pose.cast<float>());
+    }
 
     //ds set camera matrices
     message_left.setCameraMatrix(camera_matrix_left.cast<float>());
@@ -242,13 +313,9 @@ int32_t main(int32_t argc, char** argv) {
     file_txt_io << "\n";
 
     //ds progress info
-    if (rand()%2) {
-      std::cerr << "=";
-    } else {
-      std::cerr << "D 8=";
-    }
+    std::cerr << "x";
   }
-  std::cerr << "D" << std::endl;
+  std::cerr << std::endl;
 
   //ds done
   file_txt_io.flush();
