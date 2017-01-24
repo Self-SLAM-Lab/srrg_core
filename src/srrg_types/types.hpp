@@ -20,6 +20,9 @@
 
 namespace srrg_core {
 
+  //!a vector of Vector2f with alignment
+  typedef std::vector<Eigen::Vector2i, Eigen::aligned_allocator<Eigen::Vector2i> > Vector2iVector;
+
   //!a vector of Vector3f with alignment
   typedef std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f> > Vector3fVector;
 
