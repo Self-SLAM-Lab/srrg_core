@@ -23,9 +23,9 @@ namespace srrg_core{
       inline void setMaxRange(float max_range) {_max_range = max_range;}
       inline float maxRange() {return _max_range;}
 
-      inline float setTimeIncrement(float time_increment) {_time_increment = time_increment;}
+      inline void setTimeIncrement(float time_increment) {_time_increment = time_increment;}
       inline float timeIncrement() {return _time_increment;}
-      inline float setScanTime(float scan_time) {_scan_time = scan_time;}
+      inline void setScanTime(float scan_time) {_scan_time = scan_time;}
       inline float scanTime() {return _scan_time;}
 
       const std::vector<float>& ranges() const { return _ranges;}
