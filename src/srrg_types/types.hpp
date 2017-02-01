@@ -20,6 +20,9 @@
 
 namespace srrg_core {
 
+  //!a vector of Vector2f with alignment
+  typedef std::vector<Eigen::Vector2i, Eigen::aligned_allocator<Eigen::Vector2i> > Vector2iVector;
+
   //!a vector of Vector3f with alignment
   typedef std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f> > Vector3fVector;
 
@@ -31,6 +34,9 @@ namespace srrg_core {
 
   //!a vector of Matrix2f with alignment
   typedef std::vector<Eigen::Matrix2f, Eigen::aligned_allocator<Eigen::Matrix2f> > Matrix2fVector;
+
+  //!a 4x3 float matrix
+  typedef Eigen::Matrix<float, 4, 3> Matrix4_3f;
 
   //!a 4x6 float matrix
   typedef Eigen::Matrix<float, 4, 6> Matrix4_6f;
@@ -311,5 +317,12 @@ namespace srrg_core {
   /** used to represent rgb values
    */
   typedef std::vector<cv::Vec3b> RGBVector;
+
+  
+  typedef std::vector<int> IntVector;
+  
+  typedef std::vector<float> FloatVector;
+
+  typedef std::vector<std::pair<int, int> > IntPairVector;
 
 }
