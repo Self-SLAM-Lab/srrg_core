@@ -93,6 +93,21 @@ namespace srrg_core {
     }
     return T;
   }
+  inline Eigen::Isometry3d v2t(const Eigen::Matrix<double, 6, 1>& t){
+    Eigen::Isometry3d T;
+    T.setIdentity();
+    T.translation()=t.head<3>();
+    float w=t.block<3,1>(3,0).squaredNorm();
+    if (w<1) {
+      w=sqrt(1-w);
+      T.linear()=Eigen::Quaterniond(w, t(3), t(4), t(5)).toRotationMatrix();
+    } else {
+      Eigen::Vector3d q=t.block<3,1>(3,0);
+      q.normalize();
+      T.linear()=Eigen::Quaterniond(0, q(0), q(1), q(2)).toRotationMatrix();
+    }
+    return T;
+  }
 
   //!converts from isometry to 6 vector                                                                   
   //!@param t: an isometry
@@ -121,7 +136,14 @@ namespace srrg_core {
       -p.y(), p.x(), 0;
     return s;
   }
-
+  inline Eigen::Matrix3d skew(const Eigen::Vector3d& p){
+    Eigen::Matrix3d s;
+    s <<
+      0,  -p.z(), p.y(),
+      p.z(), 0,  -p.x(),
+      -p.y(), p.x(), 0;
+    return s;
+  }
 
   inline Eigen::Isometry2f v2t(const Eigen::Vector3f& t){
     Eigen::Isometry2f T;
@@ -150,11 +172,29 @@ namespace srrg_core {
       0,  s,  c;
     return R;
   }
+  inline Eigen::Matrix3d Rx(const double& rot_x){
+    const double c=cos(rot_x);
+    const double s=sin(rot_x);
+    Eigen::Matrix3d R;
+    R << 1,  0, 0,
+      0,  c,  -s,
+      0,  s,  c;
+    return R;
+  }
   
   inline Eigen::Matrix3f Ry(float rot_y){
     float c=cos(rot_y);
     float s=sin(rot_y);
     Eigen::Matrix3f R;
+    R << c,  0,  s,
+      0 , 1,  0,
+      -s,  0, c;
+    return R;
+  }
+  inline Eigen::Matrix3d Ry(const double& rot_y){
+    const double c=cos(rot_y);
+    const double s=sin(rot_y);
+    Eigen::Matrix3d R;
     R << c,  0,  s,
       0 , 1,  0,
       -s,  0, c;
@@ -170,10 +210,25 @@ namespace srrg_core {
       0,  0,  1;
     return R;
   }
+  inline Eigen::Matrix3d Rz(const double& rot_z){
+    const double c=cos(rot_z);
+    const double s=sin(rot_z);
+    Eigen::Matrix3d R;
+    R << c,  -s,  0,
+      s,  c,  0,
+      0,  0,  1;
+    return R;
+  }
 
   
   inline Eigen::Isometry3f v2tEuler(const Vector6f& v){
     Eigen::Isometry3f T;
+    T.linear()=Rx(v[3])*Ry(v[4])*Rz(v[5]);
+    T.translation()=v.head<3>();
+    return T;
+  }
+  inline Eigen::Isometry3d v2tEuler(const Eigen::Matrix<double, 6, 1>& v){
+    Eigen::Isometry3d T;
     T.linear()=Rx(v[3])*Ry(v[4])*Rz(v[5]);
     T.translation()=v.head<3>();
     return T;
