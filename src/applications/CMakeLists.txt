@@ -3,3 +3,9 @@ target_link_libraries(srrg_txt_io_converter_kitti_app
   srrg_system_utils_library
   srrg_txt_io_library
 )
+
+add_executable(srrg_txt_io_converter_euroc_app srrg_txt_io_converter_euroc_app.cpp)
+target_link_libraries(srrg_txt_io_converter_euroc_app
+  srrg_system_utils_library
+  srrg_txt_io_library
+)

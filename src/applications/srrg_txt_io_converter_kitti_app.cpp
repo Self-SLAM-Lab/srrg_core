@@ -1,6 +1,6 @@
 #include <fstream>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include "srrg_txt_io/message_writer.h"
 #include "srrg_txt_io/pinhole_image_message.h"
 #include "srrg_types/defs.h"
 
@@ -102,15 +102,6 @@ int32_t main(int32_t argc, char** argv) {
   //ds attempt to create the image directory - and check for failure
   if (mkdir(folder_txt_io_images.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0) {
     std::cerr << "ERROR: unable to create image directory: " << folder_txt_io_images << " (maybe already existing?)" << std::endl;
-    return 0;
-  }
-
-  //ds open outfile with high precision
-  std::ofstream file_txt_io(filename_txt_io.c_str());
-  file_txt_io.precision(7);
-  //file_txt_io.setf(std::ios::fixed, std::ios::floatfield);
-  if (!file_txt_io.good() || !file_txt_io.is_open()) {
-    std::cerr << "ERROR: unable to create message file: " << filename_txt_io << std::endl;
     return 0;
   }
 
@@ -264,6 +255,10 @@ int32_t main(int32_t argc, char** argv) {
   file_calibration.close();
   std::cerr << "loaded messages: " << messages_kitti.size() << std::endl;
 
+  //ds open a message writer in the current directory
+  MessageWriter txt_io_message_writer;
+  txt_io_message_writer.open(filename_txt_io);
+
   //ds generate txt_io messages
   std::cerr << "generating txt_io messages and images: " << std::endl;
   for (std::vector<MessageKITTI>::const_iterator message = messages_kitti.begin(); message != messages_kitti.end(); ++message) {
@@ -282,43 +277,38 @@ int32_t main(int32_t argc, char** argv) {
     }
 
     //ds create pinhole messages
-    srrg_core::PinholeImageMessage message_left("/camera_left/image_raw", "camera_left", message->sequence_number, message->timestamp);
-    srrg_core::PinholeImageMessage message_right("/camera_right/image_raw", "camera_right", message->sequence_number, message->timestamp);
+    srrg_core::PinholeImageMessage* message_left = new PinholeImageMessage("/camera_left/image_raw", "camera_left", message->sequence_number, message->timestamp);
+    srrg_core::PinholeImageMessage* message_right= new PinholeImageMessage("/camera_right/image_raw", "camera_right", message->sequence_number, message->timestamp);
 
     //ds set images
-    message_left.setBinaryFilePrefix(folder_txt_io_images);
-    message_right.setBinaryFilePrefix(folder_txt_io_images);
-    message_left.setImage(image_left);
-    message_right.setImage(image_right);
+    message_left->setBinaryFilePrefix(folder_txt_io_images);
+    message_right->setBinaryFilePrefix(folder_txt_io_images);
+    message_left->setImage(image_left);
+    message_right->setImage(image_right);
 
     //ds if the ground truth is available
     if (is_ground_truth_available) {
 
       //ds set poses
-      message_left.setOdometry(message->pose.cast<float>());
-      message_right.setOdometry(message->pose.cast<float>());
+      message_left->setOdometry(message->pose.cast<float>());
+      message_right->setOdometry(message->pose.cast<float>());
     }
 
     //ds set camera matrices
-    message_left.setCameraMatrix(camera_matrix_left.cast<float>());
-    message_left.setOffset(TransformMatrix3D::Identity().cast<float>());
-    message_right.setCameraMatrix(camera_matrix_right.cast<float>());
-    message_right.setOffset(robot_to_camera_right.inverse().cast<float>());
+    message_left->setCameraMatrix(camera_matrix_left.cast<float>());
+    message_left->setOffset(TransformMatrix3D::Identity().cast<float>());
+    message_right->setCameraMatrix(camera_matrix_right.cast<float>());
+    message_right->setOffset(robot_to_camera_right.inverse().cast<float>());
 
     //ds write to stream
-    file_txt_io << "PINHOLE_IMAGE_MESSAGE ";
-    message_left.toStream(file_txt_io);
-    file_txt_io << "\nPINHOLE_IMAGE_MESSAGE ";
-    message_right.toStream(file_txt_io);
-    file_txt_io << "\n";
+    txt_io_message_writer.writeMessage(*message_left);
+    delete message_left;
+    txt_io_message_writer.writeMessage(*message_right);
+    delete message_left;
 
     //ds progress info
     std::cerr << "x";
   }
   std::cerr << std::endl;
-
-  //ds done
-  file_txt_io.flush();
-  file_txt_io.close();
   return 0;
 }
