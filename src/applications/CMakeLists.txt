@@ -9,3 +9,16 @@ target_link_libraries(srrg_txt_io_converter_euroc_app
   srrg_system_utils_library
   srrg_txt_io_library
 )
+
+add_executable(srrg_txt_io_merger_app srrg_txt_io_merger_app.cpp)
+target_link_libraries(srrg_txt_io_merger_app
+  srrg_system_utils_library
+  srrg_txt_io_library
+)
+
+
+add_executable(srrg_txt_io_sorter_app srrg_txt_io_sorter_app.cpp)
+target_link_libraries(srrg_txt_io_sorter_app
+  srrg_system_utils_library
+  srrg_txt_io_library
+)
