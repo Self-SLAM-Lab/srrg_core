@@ -442,11 +442,9 @@ int32_t main(int32_t argc, char** argv) {
     if (images[message_number].second.find("cam0") != std::string::npos) {
 
       //ds allocate pinhole image message
-      srrg_core::PinholeImageMessage* txt_io_message = new srrg_core::PinholeImageMessage();
+      srrg_core::PinholeImageMessage* txt_io_message = new srrg_core::PinholeImageMessage("/camera_left/image_raw", "camera_left");
       txt_io_message->setSeq(sequence_number_image_left);
       txt_io_message->setTimestamp(images[message_number].first/1e3);
-      txt_io_message->setFrameId("cam0");
-      txt_io_message->setTopic(topic_name_camera_left);
 
       //ds set ground truth
       txt_io_message->setOdometry((imu_to_world*camera_left_to_imu).cast<float>());
@@ -455,7 +453,7 @@ int32_t main(int32_t argc, char** argv) {
       cv::Mat image_raw = cv::imread(images[message_number].second, CV_LOAD_IMAGE_GRAYSCALE);
       cv::Mat image_undistorted_rectified;
       txt_io_message->setCameraMatrix(camera_matrix_rectified.cast<float>());
-      txt_io_message->setOffset(camera_left_to_imu.cast<float>());
+      txt_io_message->setOffset(TransformMatrix3D::Identity().cast<float>());
 
       //ds rectify image
       cv::remap(image_raw, image_undistorted_rectified, undistort_rectify_maps_left[0], undistort_rectify_maps_left[1], cv::INTER_LINEAR);
@@ -475,11 +473,9 @@ int32_t main(int32_t argc, char** argv) {
     } else if (images[message_number].second.find("cam1") != std::string::npos) {
 
       //ds allocate pinhole image message
-      srrg_core::PinholeImageMessage* txt_io_message = new PinholeImageMessage();
+      srrg_core::PinholeImageMessage* txt_io_message = new PinholeImageMessage("/camera_right/image_raw", "camera_right");
       txt_io_message->setSeq(sequence_number_image_right);
       txt_io_message->setTimestamp(images[message_number].first/1e3);
-      txt_io_message->setFrameId("cam1");
-      txt_io_message->setTopic(topic_name_camera_right);
 
       //ds set ground truth
       txt_io_message->setOdometry((imu_to_world*camera_right_to_imu).cast<float>());
