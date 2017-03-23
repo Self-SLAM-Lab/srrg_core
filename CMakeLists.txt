@@ -6,7 +6,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 #set the default path for built libraries to the "lib" directory
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-# To uncomment in the futute
+# To uncomment in the future
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=gnu++11")
 
 
@@ -36,21 +36,9 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
-#ds OpenCV: we do not want to use the kinect opencv(3) package
-if("$ENV{ROS_DISTRO}" STREQUAL "kinetic")
-
-  #ds use our custom opencv
-  set(OpenCV_DIR "$ENV{HOME}/source/libraries/opencv/build/release")
-  find_package(OpenCV REQUIRED)
-  message("using custom OpenCV ${OpenCV_VERSION} (${OpenCV_DIR})")
-
-else()
-
-  #ds regular find (TODO enforce custom opencv installation?)
-  find_package(OpenCV REQUIRED)
-  message("using system OpenCV ${OpenCV_VERSION} (${OpenCV_DIR})")
-
-endif()
+#ds OpenCV - OpenCV_DIR might be overwritten by user
+find_package(OpenCV REQUIRED)
+message("using OpenCV version ${OpenCV_VERSION} (${OpenCV_DIR})")
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 
