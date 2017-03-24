@@ -325,4 +325,71 @@ namespace srrg_core {
 
   typedef std::vector<std::pair<int, int> > IntPairVector;
 
+  //ds overloaded opencv/eigen converters: double
+  inline cv::Mat_<double> toCv(const Eigen::Matrix<double, 3, 3>& matrix_eigen_) {
+    cv::Mat_<double> matrix_opencv(3, 3);
+    for(uint32_t u = 0; u < 3; ++u) {
+      for(uint32_t v = 0; v < 3; ++v) {
+        matrix_opencv.at<double>(u, v) = matrix_eigen_(u, v);
+      }
+    }
+    return matrix_opencv;
+  }
+  inline cv::Mat_<double> toCv(const Eigen::Matrix<double, 3, 4>& matrix_eigen_) {
+    cv::Mat_<double> matrix_opencv(3, 4);
+    for(uint32_t u = 0; u < 3; ++u) {
+      for(uint32_t v = 0; v < 4; ++v) {
+        matrix_opencv.at<double>(u, v) = matrix_eigen_(u, v);
+      }
+    }
+    return matrix_opencv;
+  }
+  inline cv::Mat_<double> toCv(const Eigen::Matrix<double, 5, 1>& vector_eigen_) {
+    cv::Mat_<double> vector_opencv(5,1);
+    for(uint32_t u = 0; u < 5; ++u) {
+      vector_opencv.at<double>(u) = vector_eigen_(u);
+    }
+    return vector_opencv;
+  }
+  inline Eigen::Matrix<double, 3, 1> fromCv(const cv::Vec<double, 3>& vector_opencv_) {
+    Eigen::Matrix<double, 3, 1> vector_eigen;
+    for(uint32_t u = 0; u < 3; ++u) {
+      vector_eigen(u) = vector_opencv_(u);
+    }
+    return vector_eigen;
+  }
+
+  //ds overloaded opencv/eigen converters: float
+  inline cv::Mat_<float> toCv(const Eigen::Matrix<float, 3, 3>& matrix_eigen_) {
+    cv::Mat_<float> matrix_opencv(3, 3);
+    for(uint32_t u = 0; u < 3; ++u) {
+      for(uint32_t v = 0; v < 3; ++v) {
+        matrix_opencv.at<float>(u, v) = matrix_eigen_(u, v);
+      }
+    }
+    return matrix_opencv;
+  }
+  inline cv::Mat_<float> toCv(const Eigen::Matrix<float, 3, 4>& matrix_eigen_) {
+    cv::Mat_<float> matrix_opencv(3, 4);
+    for(uint32_t u = 0; u < 3; ++u) {
+      for(uint32_t v = 0; v < 4; ++v) {
+        matrix_opencv.at<float>(u, v) = matrix_eigen_(u, v);
+      }
+    }
+    return matrix_opencv;
+  }
+  inline cv::Mat_<float> toCv(const Eigen::Matrix<float, 5, 1>& vector_eigen_) {
+    cv::Mat_<float> vector_opencv(5,1);
+    for(uint32_t u = 0; u < 5; ++u) {
+      vector_opencv.at<float>(u) = vector_eigen_(u);
+    }
+    return vector_opencv;
+  }
+  inline Eigen::Matrix<float, 3, 1> fromCv(const cv::Vec<float, 3>& vector_opencv_) {
+    Eigen::Matrix<float, 3, 1> vector_eigen;
+    for(uint32_t u = 0; u < 3; ++u) {
+      vector_eigen(u) = vector_opencv_(u);
+    }
+    return vector_eigen;
+  }
 }
