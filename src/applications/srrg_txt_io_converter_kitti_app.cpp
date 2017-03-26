@@ -304,7 +304,7 @@ int32_t main(int32_t argc, char** argv) {
     txt_io_message_writer.writeMessage(*message_left);
     delete message_left;
     txt_io_message_writer.writeMessage(*message_right);
-    delete message_left;
+    delete message_right;
 
     //ds progress info
     std::cerr << "x";
