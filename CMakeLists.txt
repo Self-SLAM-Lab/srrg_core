@@ -22,6 +22,11 @@ if (${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES armv7l)
   message("ENABLING ARM NEON OPTIMIZATIONS")
 endif ()
 
+find_package(OpenCV REQUIRED)
+message(STATUS "${PROJECT_NAME}: OpenCV version ${OpenCV_VERSION}")
+include_directories(${OpenCV_INCLUDE_DIRS})
+message(STATUS "OpenCV_INCLUDE_DIRS: ${OpenCV_INCLUDE_DIRS}")
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
