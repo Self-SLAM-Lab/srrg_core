@@ -43,6 +43,8 @@ int main(int argc, char** argv) {
   double t_end = getTime();
   cerr << "SRRG Tree Creation Time: " << (t_end - t_start) * 1000 << " ms" << endl;
   
+  kd_tree->sanityCheck();
+
   // perform queries
   int found = 0;
   double max_distance = 0.5;
