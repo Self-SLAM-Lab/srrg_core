@@ -24,7 +24,7 @@ namespace srrg_core {
     inline const std::string& topic() const {return _topic;}
     inline int seq() const {return _seq;}
     inline double timestamp() const {return _timestamp;}
-    inline void  setTopic(std::string& t)  {_topic = t;}
+    inline void  setTopic(const std::string& t)  {_topic = t;}
     inline const std::string& frameId() const {return _frame_id;}
     inline void setFrameId(const std::string& fid) {_frame_id = fid;}
     inline void setSeq(int s)  {_seq = s;}
