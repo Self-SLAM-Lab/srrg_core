@@ -7,6 +7,10 @@
 #include <Eigen/StdVector>
 #include <Eigen/Eigenvalues> 
 
+#ifdef __SRRG_PARALLEL_KDTREE__
+#include <omp.h>
+#endif
+
 namespace srrg_core {
   
   /**
@@ -190,7 +194,7 @@ namespace srrg_core {
       }
       _root = _buildTree(0,
 			 points_.size(),
-			 max_leaf_range);
+			 max_leaf_range,0);
     }
     //! dtor
     ~KDTree() {
@@ -343,7 +347,8 @@ namespace srrg_core {
     //! returns the root of the search tree
     TreeNode* _buildTree(const size_t min_index,
 			     const size_t max_index,
-			     const T max_leaf_range) {
+			 const T max_leaf_range,
+			 int level) {
       size_t num_points = max_index-min_index;
       if (! num_points) {
 	return 0;
@@ -365,12 +370,41 @@ namespace srrg_core {
 	node->setMaxIndex(max_index);
 	node->_num_points=num_points;
       } else {
+	TreeNode* left_tree, *right_tree;
+
+
+#ifdef __SRRG_PARALLEL_KDTREE__
+	int num_threads=omp_get_max_threads();
+	int split_level=-1;
+	if (level>0)
+	  split_level=floor(log(num_threads)/log(2));
+
+	if (split_level==level) {
+          #pragma omp parallel sections
+	  {
+            #pragma omp section
+	    {
+	      left_tree = _buildTree(min_index, min_index + num_left_points, max_leaf_range, level+1);
+	    }
+            #pragma omp section
+	    {
+	      right_tree = _buildTree(min_index + num_left_points, max_index, max_leaf_range, level+1);
+	    }
+	  }
+	} else {
+#endif //__SRRG_PARALLEL_KDTREE__
+	  
+	  left_tree = _buildTree(min_index, min_index + num_left_points, max_leaf_range, level+1);
+	  right_tree = _buildTree(min_index + num_left_points, max_index, max_leaf_range, level+1);
+#ifdef __SRRG_PARALLEL_KDTREE__
+	}
+#endif
 	node = new TreeNode(this,
 			    _num_nodes,
 			    mean,
 			    normal,
-			    _buildTree(min_index, min_index + num_left_points, max_leaf_range),
-			    _buildTree(min_index + num_left_points, max_index, max_leaf_range));    
+			    left_tree,
+			    right_tree);    
       }
       _num_nodes++;
       return node;
