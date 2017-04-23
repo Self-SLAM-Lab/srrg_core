@@ -15,6 +15,7 @@ namespace srrg_core {
     inline void setDepthScale(float depth_scale) {_depth_scale = depth_scale;}
     inline float depthScale() const { return _depth_scale; }
     virtual const std::string& tag() const;
+    inline std::string binaryFilename() const {return  _binaryFilename();}
     virtual void fromStream(std::istream& is);
     virtual void toStream(std::ostream& os) const;
   protected:
