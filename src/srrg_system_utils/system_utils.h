@@ -24,11 +24,11 @@ namespace srrg_core {
   //! @return converts a system timeval in seconds
   inline double tv2sec(const struct timeval& tv_) {return (static_cast<double>(tv_.tv_sec)+1e-6*static_cast<double>(tv_.tv_usec));}
 
+  //! @class SystemUsageCounter
   //! @brief system usage analysis
   //! monitors the resources of a process between two updates
   //! declare one instance of this object in the process you want to monitor
   //! and call once in a while the update() function
-  //! @class SystemUsageCounter
   class SystemUsageCounter {
   public:
 
