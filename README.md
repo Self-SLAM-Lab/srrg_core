@@ -38,6 +38,18 @@ These include:
 * `srrg_open_file_example`: how to open and parse a srrg file
 * `srrg_kdtree_example`:    how to use a KD tree
 
+
+PINHOLE_IMAGE_MESSAGE {TAG del messaggio} /camera/depth/image_raw {topic (vedi ROS)} camera_frame_rgb {FRAME_ID (vedi ROS)} 00009878 {SEQ number (ROS)} 1467474417.16944  {TIME(ROS)} 0.134921 0.0505134  0.262039  -0.40662 0.403205  -0.66248 {Trasformata del sensore w.r.t. base del robot, tx ty tz qx qy qz} 1 {FLAG, se alto esiste odometria}        0        0        0        0 0.103823        0 0 {odometria}  0.001 {DEPTH SCALING, significa che un valore di 1000 su un pixel della depth image indica 1 metro} orazio_giorgio_home_2016-07-02-17-46-56.txt.d/camera.depth.image_raw_00009878.pgm {PATH dell'immagine} 285.171 0 160 0 285.171 120 {CAMERA MATRIX}
+
+## TXT-IO file structure
+SRRG core uses a set of sensor-based messages.
+These include:
+* `PINHOLE_IMAGE_MESSAGE`: <topic> <frame_id> <seq> <timestamp> <sensor w.r.t. robot, tx ty tz qx qy qz> <flag, high means odometry exists> <odometry> <depth scaling> <image path> <camera matrix>
+* `IMU_MESSAGE`
+* `JOINT_STATE_MESSAGE`
+* `LASER_MESSAGE`
+* `SPHERICAL_IMAGE_MESSAGE`
+
 ## Authors
 * Giorgio Grisetti
 * Jacopo Serafin
