@@ -42,7 +42,7 @@ These include:
 ## TXT-IO file structure
 SRRG core uses a set of sensor-based messages.
 These include:
-* `PINHOLE_IMAGE_MESSAGE`: <topic> <frame_id> <seq> <timestamp> <sensor w.r.t. robot, tx ty tz qx qy qz> <flag, high means odometry exists> <odometry> <depth scaling> <image path> <camera matrix>
+* `PINHOLE_IMAGE_MESSAGE`: _topic_, _frame-id_, _seq_, _timestamp_, _sensor w.r.t. robot_ i.e. tx ty tz qx qy qz, _flag_ high means odometry exists, _odometry_, _depth-scaling_, _image-path_, _camera-matrix_
 * `IMU_MESSAGE`
 * `JOINT_STATE_MESSAGE`
 * `LASER_MESSAGE`
