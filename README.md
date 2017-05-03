@@ -8,6 +8,7 @@ the srrg repos. These include
 * computing 2D distance maps for nearest neighbor search
 * computing KD trees for nn search in multidimensional spaces
 * drawing lines on a 2D map
+
 Besides the libraries, the package provides also a set of utilities
 to convert and merge text based log files
 
