@@ -41,12 +41,16 @@ These include:
 
 ## TXT-IO file structure
 SRRG core uses a set of sensor-based messages.
-These include:
-* `PINHOLE_IMAGE_MESSAGE`: _topic_, _frame-id_, _seq_, _timestamp_, _sensor w.r.t. robot_ i.e. tx ty tz qx qy qz, _flag_ high means odometry exists, _odometry_, _depth-scaling_, _image-path_, _camera-matrix_
-* `IMU_MESSAGE`
-* `JOINT_STATE_MESSAGE`
-* `LASER_MESSAGE`
-* `SPHERICAL_IMAGE_MESSAGE`
+
+A `BASE_SENSOR_MESSAGE` contains the following fields:
+* _topic_, _frame-id_, _seq_, _timestamp_, _sensor-offset_, _odometry-flag_, _odometry_, _imu-flag_, _imu_
+
+The derived messages are:
+* `PINHOLE_IMAGE_MESSAGE`: _BASE-SENSOR-MESSAGE-FIELDS_, _depth-scaling_, _image-path_, _camera-matrix_
+* `SPHERICAL_IMAGE_MESSAGE`: _BASE-SENSOR-MESSAGE-FIELDS_, _depth-scaling_, _image-path_, _camera-matrix_
+* `IMU_MESSAGE`: _BASE-SENSOR-MESSAGE-FIELDS_, _orientation (qw, qx, qy, qz)_, _angular-velocity_, _linear-acceleration_
+* `JOINT_STATE_MESSAGE`:  _BASE-SENSOR-MESSAGE-FIELDS_, _num-joints_, _joint-name_, _joint-position_, _joint-velocity_, _joint-effort_, _[...]_
+* `LASER_MESSAGE`: _BASE-SENSOR-MESSAGE-FIELDS_, _min-range_, _max-range_, _min-angle_, _max-angle_, _angle-increment_, _time-increment_, _scan-time_, _range-size_, _ranges[...]_, _intensity-size_, _intensitites[...]_
 
 ## Authors
 * Giorgio Grisetti
