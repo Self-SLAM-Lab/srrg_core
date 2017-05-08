@@ -151,6 +151,10 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/src
 )
 
+#ds help the catkin tool on 16.04 (cmake seems unable to find single libraries, although catkin claims the link_directories call is not required)
+#ds in order to avoid linking against the catkin_LIBRARIES bulk everytime enable this so one can select single libraries
+link_directories(${catkin_LIBRARY_DIRS})
+
 ## Declare a C++ library
 # add_library(srrg_core
 #   src/${PROJECT_NAME}/srrg_core.cpp
