@@ -24,8 +24,10 @@ const char* banner[] = {
 
 int main(int argc, char ** argv) {
 
-    std::string depth_topic = "/camera/depth/image_raw";
-    std::string rgb_topic = "/camera/rgb/image_raw";
+//    std::string depth_topic = "/camera/depth/image_raw";
+//    std::string rgb_topic = "/camera/rgb/image_raw";
+    std::string depth_topic = "/kinect2/sd/image_depth_rect";
+    std::string rgb_topic = "/kinect2/sd/image_color_rect";
     std::string dump_file = "";
     int c=1;
     while (c<argc){
