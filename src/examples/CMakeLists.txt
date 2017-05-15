@@ -20,3 +20,18 @@ add_executable(srrg_kdtree_example srrg_kdtree_example.cpp)
 target_link_libraries(srrg_kdtree_example
   srrg_system_utils_library
 )
+
+add_executable(srrg_trajectory_saver_example_app srrg_trajectory_saver_example_app.cpp)
+target_link_libraries(srrg_trajectory_saver_example_app
+  srrg_system_utils_library
+  srrg_txt_io_library
+)
+
+
+
+add_executable(srrg_remove_odometry_offset_example_app srrg_remove_odometry_offset_example_app.cpp)
+target_link_libraries(srrg_remove_odometry_offset_example_app
+  srrg_system_utils_library
+  srrg_txt_io_library
+)
+

@@ -1,10 +1,12 @@
 #include "message_timestamp_synchronizer.h"
 #include <iostream>
+#include <iomanip>
 
 namespace srrg_core {
   using namespace std;
 
   MessageTimestampSynchronizer::MessageTimestampSynchronizer() {
+    _time_interval=0.01;
     _last_stamp=-1;
   }
 
@@ -17,7 +19,7 @@ namespace srrg_core {
     for(size_t i=0; i<_topics.size(); i++){
       if (_topics[i]==msg->topic()) {
 	_messages[i]=std::tr1::shared_ptr<BaseSensorMessage>(msg);
-	if(msg->seq()>_last_stamp)
+	if(msg->timestamp()>_last_stamp)
 	  _last_stamp=msg->timestamp();
       }
     }
@@ -28,7 +30,7 @@ namespace srrg_core {
     for(size_t i=0; i<_topics.size(); i++){
       if (_topics[i]==msg->topic()) {
 	_messages[i]=msg;
-	if(msg->seq()>_last_stamp)
+	if(msg->timestamp()>_last_stamp)
 	  _last_stamp=msg->timestamp();
       }
     }
