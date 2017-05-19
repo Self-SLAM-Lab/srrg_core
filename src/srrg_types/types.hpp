@@ -65,6 +65,9 @@ namespace srrg_core {
   //!a 6x3 float matrix
   typedef Eigen::Matrix<float, 6, 3> Matrix6_3f;
 
+  //!a 5 float cv vector
+  typedef cv::Vec<float, 5> Vec5f;
+  
   //!check if an Eigen type contains a nan element
   //!@returns true if at least one element of
   //!the argument is null
@@ -294,6 +297,11 @@ namespace srrg_core {
    */
   typedef cv::Mat_<cv::Vec3f> Float3Image;
 
+  /** \typedef Float5Image
+   * \brief A 5D float cv::Mat.
+   */
+  typedef cv::Mat_<Vec5f> Float5Image;
+  
   /** \typedef DoubleImage
    * \brief A double cv::Mat.
    */
