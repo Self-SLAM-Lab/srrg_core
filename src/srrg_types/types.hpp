@@ -67,6 +67,9 @@ namespace srrg_core {
 
   //!a 5 float cv vector
   typedef cv::Vec<float, 5> Vec5f;
+
+  //!a 7 float cv vector
+  typedef cv::Vec<float, 7> Vec7f;
   
   //!check if an Eigen type contains a nan element
   //!@returns true if at least one element of
@@ -301,6 +304,11 @@ namespace srrg_core {
    * \brief A 5D float cv::Mat.
    */
   typedef cv::Mat_<Vec5f> Float5Image;
+
+  /** \typedef Float5Image
+   * \brief A 7D float cv::Mat.
+   */
+  typedef cv::Mat_<Vec7f> Float7Image;
   
   /** \typedef DoubleImage
    * \brief A double cv::Mat.
