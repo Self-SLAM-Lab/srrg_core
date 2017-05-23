@@ -35,7 +35,7 @@ namespace srrg_core {
       if (it != _creators.end()) {
 	throw std::runtime_error("error, type already registered");
       }
-      std::cerr << "Registering message with tag" << tag << std::endl;
+      std::cerr << "Registering message with tag: " << tag << std::endl;
       MessageCreator<T> *creator = new MessageCreator<T>;
       _creators.insert(std::make_pair(tag, creator));
     }
