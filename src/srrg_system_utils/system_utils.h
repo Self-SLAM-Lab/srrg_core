@@ -20,6 +20,10 @@ namespace srrg_core {
   //! @return the system time in seconds
   double getTime();
 
+  //! @brief returns the system time in seconds as formatted string HH:MM:SS.mmm
+  //! @return the system time in seconds as formatted string HH:MM:SS.mmm
+  std::string getTimestamp();
+
   //! @brief converts a system timeval to seconds
   //! @return converts a system timeval in seconds
   inline double tv2sec(const struct timeval& tv_) {return (static_cast<double>(tv_.tv_sec)+1e-6*static_cast<double>(tv_.tv_usec));}
