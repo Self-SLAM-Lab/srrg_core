@@ -22,7 +22,7 @@ int main(int argc, char** argv){
   putPointIndices(points_image, points);
 
   // build a distance map
-  DistanceMap distance_map;
+  PathMap distance_map;
   FloatImage distance_image(rows, cols);
   IntImage indices_image(rows,cols);
   RGBImage shown_image;
@@ -35,7 +35,7 @@ int main(int argc, char** argv){
   // show progressive construction of distance map
   while (d_curr<d_max) {
     distance_map.compute(indices_image, distance_image, points_image, d_curr);
-    drawDistanceMap(shown_image, distance_image, d_curr-1);
+    drawPathMap(shown_image, distance_image, d_curr-1);
     cv::imshow("distance map", shown_image);
     cv::waitKey(10);
     d_curr++;

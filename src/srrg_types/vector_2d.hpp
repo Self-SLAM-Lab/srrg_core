@@ -56,7 +56,7 @@ namespace srrg_core {
     _cols=cols_;
     _row_ptrs.resize(rows_);
     _data.resize(num_elements);
-      reindex();
+    reindex();
   }
   
      
