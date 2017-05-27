@@ -22,6 +22,24 @@ namespace srrg_core {
     return tv2sec(tv);
   }
 
+  std::string getTimestamp() {
+
+    //ds obtain current time as count
+    timeval time_value;
+    gettimeofday(&time_value, 0);
+
+    //ds compute milliseconds
+    const int milliseconds = time_value.tv_usec/1000;
+
+    //ds obtain structured time information (hours, minutes, seconds)
+    struct tm* time_info = localtime(&time_value.tv_sec);
+
+    //ds stream to formatted string
+    char buffer[13];
+    std::snprintf(buffer, 13, "%02i:%02i:%02i.%03i", time_info->tm_hour, time_info->tm_min, time_info->tm_sec, milliseconds);
+    return std::string(buffer);
+  }
+
   SystemUsageCounter::SystemUsageCounter(): _system_cpu(0),
                                             _user_cpu(0),
                                             _total_memory(0) {
