@@ -43,7 +43,11 @@ namespace srrg_core{
     inline bool onBorder(std::size_t row, std::size_t col) const {
       return row==0 || col==0 || row==rows()-1 || col==_cols-1;
     }
-    
+
+    inline bool inside(std::size_t row, std::size_t col) const {
+      return row>=0 && col>=0 &&row<rows() && col<_cols;
+    }
+
     inline CellType& at(std::size_t row, std::size_t col) {
       if (col>=_cols)
 	throw std::out_of_range("columns");
