@@ -1,5 +1,5 @@
 #pragma once
-#include "distance_map.h"
+#include "path_map.h"
 
 namespace srrg_core {
   class BasePathSearch{
