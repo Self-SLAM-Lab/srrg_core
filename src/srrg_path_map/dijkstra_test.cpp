@@ -1,0 +1,311 @@
+#include "path_map.h"
+#include "dijkstra_path_search.h"
+#include "distance_map_path_search.h"
+
+#include "srrg_system_utils/system_utils.h"
+#include "opencv2/highgui/highgui.hpp"
+
+using namespace std;
+
+using namespace srrg_core;
+
+Vector2iVector goals;
+Eigen::Vector2i current_position;
+FloatImage shown_image;
+DijkstraPathSearch path_calculator;
+
+// image with free and occupied space. Each occupied cell has unique index
+// recomputed when touching the occupied and free thresholds
+IntImage indices_image; 
+
+// distance image. unknown cell have negative distance
+// recomputed when touching the resolution and the safety_range, OR the parameters
+// controlling the indices images are touched
+FloatImage distance_image;
+
+// cost_map. recomputed when max cost/ min cost or robot radius are touched or distance_image recomputed
+FloatImage cost_image; // image of the costmap
+
+// likelihood field, recomputed when parameters are changed
+PathMap path_map; // path field
+
+enum WhatToShow {Map, Distance, Cost};
+WhatToShow what_to_show = Map;
+
+float max_cost=100;
+float min_cost=20;
+float robot_radius=0.3;
+float safety_region=1.0f;
+
+float resolution=0.05;
+int free_threshold=240;
+int occ_threshold=60;
+
+// converts a map into an int image
+// to each occuiped cell is assigned a unique value >=0
+// to each free cell is assigned -1
+// to each unknown cell is assigned -2;
+
+bool recompute_occupancy=true;
+bool recompute_distance=true;
+bool recompute_cost=true;
+
+
+
+void grayMap2indices(IntImage& dest,
+	       const UnsignedCharImage& src,
+	       unsigned char occ_threshold,
+	       unsigned char free_threshold) {
+  int rows=src.rows;
+   int cols=src.cols;
+  dest.create(rows, cols);
+  int num_occupied=0;
+  int num_free=0;
+  int num_unknown=0;
+  for (int r=0; r<rows; ++r){
+    int* dest_ptr=dest.ptr<int>(r);
+    const unsigned char* src_ptr=src.ptr<const unsigned char>(r);
+    for (int c=0; c<cols; ++c, ++dest_ptr, ++ src_ptr){
+      unsigned char cell_value=*src_ptr;
+      if (*src_ptr>free_threshold){
+	*dest_ptr=-1;
+	++num_free;
+      } else if(*src_ptr<occ_threshold) {
+	*dest_ptr = ++num_occupied;
+      } else {
+	*dest_ptr = -2;
+	++num_unknown;
+      }
+    }
+  }
+  cerr << "map made binary" << endl;
+  cerr << "free cells:" << num_free << endl;
+  cerr << "unknown cells:" << num_unknown << endl;
+  cerr << "occupied cells:" << num_occupied <<  endl;
+  
+}
+
+void indices2distances(FloatImage& distances,
+		       const IntImage& indices,
+		       float resolution,
+		       float max_distance) {
+
+  unsigned int int_max_distance  = max_distance/resolution;
+  DistanceMapPathSearch dmap_calculator;
+  PathMap distance_map;
+  dmap_calculator.setMaxDistance(int_max_distance);
+  dmap_calculator.setIndicesImage(indices);
+  dmap_calculator.setOutputPathMap(distance_map);
+  dmap_calculator.compute();
+  distances=dmap_calculator.distanceImage() * resolution;
+
+}
+
+
+void distances2cost(FloatImage& dest,
+		    const FloatImage& src,
+		    float robot_radius,
+		    float safety_region,
+		    float min_cost,
+		    float max_cost) {
+  int rows=src.rows;
+  int cols=src.cols;
+  dest.create(rows, cols);
+  dest=0;
+  int num_occupied=0;
+  int num_free=0;
+  int num_unknown=0;
+  float slope=(max_cost-min_cost)/(robot_radius-safety_region);
+  float offset=max_cost-slope*robot_radius;
+
+  cerr << "robot_radius: " << robot_radius << endl;
+  cerr << "safety_region: " << safety_region << endl;
+  cerr << "min_cost: " << min_cost << endl;
+  cerr << "max_cost: " << max_cost << endl;
+
+  cerr << "slope: " << slope << endl;
+  cerr << "offset: " << max_cost << endl;
+  
+  for (int r=0; r<rows; ++r){
+    float* dest_ptr=dest.ptr<float>(r);
+    const float* src_ptr=src.ptr<const float>(r);
+    for (int c=0; c<cols; ++c, ++dest_ptr, ++ src_ptr){
+      float distance=*src_ptr;
+      float& cost = *dest_ptr;
+      if (distance<robot_radius){
+	cost=max_cost;
+	continue;
+      }
+      if (distance<safety_region){
+	cost=slope*distance+offset;
+	continue;
+      }
+      cost=min_cost;
+    }
+  }
+}
+
+
+static void mouseEventHandler( int event, int x, int y, int flags, void* userdata) {
+  if (event==cv::EVENT_LBUTTONDOWN){
+    goals.push_back(Eigen::Vector2i(y,x));
+    cerr << "Adding goal [" << goals.size() << " " << y << " " << x << "]" << endl;
+  }
+  if (event==cv::EVENT_RBUTTONDOWN){
+    current_position = Eigen::Vector2i(y,x);
+    cerr << "Adding pose [ " << y << " " << x << "]" << endl;
+  }
+
+}
+
+static void onOccupancyTrackbar(int, void*) {
+  recompute_occupancy=true;
+  recompute_distance=true;
+  recompute_cost=true;
+}
+
+static void onDistanceTrackbar(int, void*) {
+  recompute_distance=true;
+  recompute_cost=true;
+}
+
+static void onCostTrackbar(int, void*) {
+  recompute_cost=true;
+}
+
+void showStuff() {
+  switch(what_to_show) {
+  case Map:
+    shown_image.resize(indices_image.rows, indices_image.cols);
+    for (int r=0; r<indices_image.rows; ++r) {
+      int* src_ptr=indices_image.ptr<int>(r);
+      float* dest_ptr=shown_image.ptr<float>(r);
+      for (int c=0; c<indices_image.cols; ++c, ++src_ptr, ++dest_ptr){
+	if (*src_ptr<-1)
+	  *dest_ptr = .5f;
+	else if (*src_ptr == -1)
+	  *dest_ptr = 1.f;
+	else
+	  *dest_ptr=0.f;
+      }
+    }
+    break;
+  case Distance:
+    shown_image=distance_image*(1./safety_region);
+    break;
+    
+  case Cost:
+    shown_image=cost_image*(1.f/max_cost);
+    break;
+
+  }
+
+  for (const Eigen::Vector2i& goal:goals) {
+    cv::circle(shown_image, cv::Point(goal.y(), goal.x()), 3, cv::Scalar(100.0f)); 
+  }
+  cv::circle(shown_image, cv::Point(current_position.y(), current_position.x()), 3, cv::Scalar(100.0f), 3.0f);
+  if (current_position.x()>=0 && goals.size()){
+    PathMapCell* current=&path_map(current_position.x(), current_position.y());
+    while (current&& current->parent && current->parent!=current) {
+      PathMapCell* parent=current->parent;
+      cv::line(shown_image,
+	       cv::Point(current->c, current->r),
+	       cv::Point(parent->c, parent->r),
+	       cv::Scalar(0.0f));
+      current = current->parent;
+    }
+  }
+
+  cv::imshow("path", shown_image);
+}
+
+int main(int argc, char** argv){
+  
+  cerr << "loading image from file: " << argv[1] << endl;
+  cv::Mat grid_map= cv::imread(argv[1]);
+  UnsignedCharImage gray_map;
+
+  cvtColor(grid_map, gray_map, CV_BGR2GRAY);
+  cvNamedWindow("controls");
+  cv::createTrackbar("occ_threshold", "controls", &occ_threshold, 255, onOccupancyTrackbar);
+  cv::createTrackbar("free_threshold", "controls", &free_threshold, 255, onOccupancyTrackbar);
+  int resolution_in_mm=1000*resolution;
+  cv::createTrackbar("resolution_in_mm", "controls", &resolution_in_mm, 500, onDistanceTrackbar);
+  
+  cvNamedWindow("path");
+  int max_cost_int=max_cost;
+  cv::createTrackbar("max_cost", "controls", &max_cost_int, 1000, onCostTrackbar);
+
+  int min_cost_int=min_cost;
+  cv::createTrackbar("min_cost", "controls", &min_cost_int, 1000, onCostTrackbar);
+
+  int safety_region_in_mm=safety_region*1000;
+  cv::createTrackbar("safety_region_in_mm", "controls", &safety_region_in_mm, 3000, onDistanceTrackbar);
+
+  int robot_radius_in_mm=robot_radius*1000;
+  cv::createTrackbar("robot_radius_in_mm", "controls", &robot_radius_in_mm, 3000, onCostTrackbar);
+
+  
+  cv::setMouseCallback("path", mouseEventHandler, NULL);
+
+  shown_image.create(gray_map.rows, gray_map.cols);
+  
+  bool run=true;
+  current_position.x()=-1;
+  current_position.y()=-1;
+  
+  while(run) {
+
+    if (recompute_occupancy) {
+      grayMap2indices(indices_image, gray_map, occ_threshold, free_threshold);
+      recompute_occupancy=false;
+    }
+    if (recompute_distance) {
+      safety_region= 1e-3*safety_region_in_mm;
+      resolution=1e-3*resolution_in_mm;
+      indices2distances(distance_image, indices_image, resolution, safety_region);
+      recompute_distance=false;
+    }
+    if (recompute_cost) {
+      min_cost=min_cost_int;
+      max_cost=max_cost_int;
+      robot_radius=1e-3*robot_radius_in_mm;
+      safety_region= 1e-3*safety_region_in_mm;
+      distances2cost(cost_image,
+		     distance_image,
+		     robot_radius,
+		     safety_region,
+		     min_cost,
+		     max_cost);
+      recompute_cost=false;
+    }
+    
+    path_calculator.setMaxCost(max_cost-1);
+    path_calculator.setCostMap(cost_image);
+    path_calculator.setOutputPathMap(path_map);
+    if (! goals.empty() && current_position.x()>=0){
+      double t_start=getTime();
+      path_calculator.goals()=goals;
+      path_calculator.compute();
+      double t_end=getTime();
+      cerr << "time: " << t_end - t_start << " " << path_calculator.numOperations() << endl;
+    }
+    showStuff();
+
+    unsigned char key=cv::waitKey(10);
+    switch(key){
+    case 'x':
+      goals.clear();
+      current_position.x()=-1;
+      current_position.y()=-1;
+      break;
+    case 'm':
+      what_to_show=Map; break;
+    case 'd':
+      what_to_show=Distance; break;
+    case 'c':
+      what_to_show=Cost; break;
+    case 27: run=false; break;
+    }
+  }
+}

@@ -8,3 +8,19 @@ add_library(srrg_path_map_library SHARED
 target_link_libraries(srrg_path_map_library
   ${OpenCV_LIBS}
 )
+
+add_executable(distance_map_test distance_map_test.cpp)
+
+target_link_libraries(distance_map_test
+  srrg_path_map_library
+  srrg_system_utils_library
+  ${OPENCV_LIBS}
+  )
+
+add_executable(dijkstra_test dijkstra_test.cpp)
+
+target_link_libraries(dijkstra_test
+  srrg_path_map_library
+  srrg_system_utils_library
+  ${OPENCV_LIBS}
+  )

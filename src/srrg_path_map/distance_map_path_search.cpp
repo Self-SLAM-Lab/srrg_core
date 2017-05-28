@@ -1,4 +1,5 @@
 #include "distance_map_path_search.h"
+
 #include <iostream>
 namespace srrg_core {
   using namespace std;
@@ -46,7 +47,7 @@ namespace srrg_core {
 	}
       }
     }
-    int operations = 0;
+    _num_operations = 0;
     size_t maxQSize = q.size();
     // cerr << "startq: "  << maxQSize << endl;
     //int currentDistance = 0;
@@ -67,7 +68,7 @@ namespace srrg_core {
 	int dc = c-parent->c;
 	int d=(dr*dr+dc*dc);
 	// // cerr << "children: " << children->r << " "  << children->c << " " << children->distance <<  " " << d << endl;
-	operations++;
+	_num_operations++;
 	if (d<_max_squared_distance && children->distance>d) {
 	  children->parent = parent;
 	  _indices_map.at<int>(r,c) = parent_index;

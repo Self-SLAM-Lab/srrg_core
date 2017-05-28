@@ -15,7 +15,7 @@ namespace srrg_core {
       throw std::runtime_error("cost map not set, not possible to compute minimal paths");
 
     if (!_output_path_map)
-      throw std::runtime_error("cost map not set, not possible to compute minimal paths");
+      throw std::runtime_error("output map not set, not possible to compute minimal paths");
 
     PathMap& output = *_output_path_map;
     const int rows=_cost_map->rows;
@@ -41,10 +41,10 @@ namespace srrg_core {
       const int r=goal.x();
       const int c=goal.y();
       if (!output.inside(r,c)){
-	throw std::runtime_error("unreacheable goal, out of map");
+	return false;
       }
       if (_cost_map->at<float>(r,c) > _max_cost){
-	throw std::runtime_error("unreacheable goal, invalid location");
+	return false;
       }
       PathMapCell& goal_cell=output(r,c);
       goal_cell.distance=0;
@@ -52,6 +52,7 @@ namespace srrg_core {
       q.push(&goal_cell);
     }
 
+    _num_operations=0;
     size_t max_q_size=q.size();
     // pull and expand
     while (! q.empty()){
@@ -75,6 +76,7 @@ namespace srrg_core {
 	  children->distance = estimated_distance;
 	  q.push(children);
 	}
+	_num_operations++;
       }
       if (q.size() > max_q_size)
 	max_q_size = q.size();
