@@ -9,7 +9,7 @@ namespace srrg_core {
 
   using namespace std;
 
-  void PathMap::fill(float distance, float weight) {
+  void PathMap::fill(float distance, float cost) {
     for (size_t r=0; r<rows(); ++r){
       PathMapCell* cell_ptr=_row_ptrs[r];
       for (size_t c=0; c<cols(); ++c, ++cell_ptr){
@@ -17,7 +17,7 @@ namespace srrg_core {
 	cell_ptr->c=c;
 	cell_ptr->parent=0;
 	cell_ptr->distance=distance;
-	cell_ptr->weight=weight;
+	cell_ptr->cost=cost;
       }
     }
   }

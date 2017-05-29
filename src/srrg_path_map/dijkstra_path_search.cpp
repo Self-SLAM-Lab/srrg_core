@@ -30,7 +30,7 @@ namespace srrg_core {
 	cell_ptr->c=c;
 	cell_ptr->parent=0;
 	cell_ptr->distance=std::numeric_limits<float>::max();
-	cell_ptr->weight=*cost_ptr;
+	cell_ptr->cost=*cost_ptr;
       }
     }
 
@@ -63,13 +63,13 @@ namespace srrg_core {
       
       for (int i=0; i<8; i++){
 	PathMapCell* children=  current+output.eightNeighborOffsets()[i];
-	if (children->weight>_max_cost)
+	if (children->cost>_max_cost)
 	  continue;
 	
 	int dr = children->r - current->r;
 	int dc = children->c - current->c;
 	float step_cost=(dr==0||dc==0) ? _cell_traversal_cost : _cell_traversal_cost_diagonal;
-	step_cost*=children->weight;
+	step_cost*=children->cost;
 	float estimated_distance=step_cost+current->distance;
 	if (children->distance>estimated_distance) {
 	  children->parent = current;

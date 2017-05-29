@@ -13,6 +13,7 @@ namespace srrg_core {
     //! ctor
     PathMapCell(){
       parent = 0;
+      cost = 1;
       distance = std::numeric_limits<int>::max();
       r = 0;
       c = 0;
@@ -24,7 +25,7 @@ namespace srrg_core {
     //! the distance to the closest
     float distance;
     //! weight factor for the distance (smaller for nearer objects);
-    float weight;
+    float cost;
 
   };
 
