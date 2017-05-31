@@ -32,7 +32,7 @@ namespace srrg_core {
   void
   Vector2D<CellType_, AllocatorType_>::updateEightNeighborOffsets() {
     if (rows()<2 || cols()<2) {
-      memset(_eight_neighbors_offsets, 8 * sizeof(int), 0);
+      memset(_eight_neighbors_offsets, 0, 8 * sizeof(int));
       return;
     }
     int k;
