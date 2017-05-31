@@ -35,7 +35,7 @@ namespace srrg_core {
       memset(_eight_neighbors_offsets, 0, 8 * sizeof(int));
       return;
     }
-    int k;
+    int k=0;
     for (int r=-1; r<=1; ++r) {
 	for (int c=-1; c<=1; ++c) {
 	  if (!r && !c)
