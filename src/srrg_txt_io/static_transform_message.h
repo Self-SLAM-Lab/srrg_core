@@ -1,4 +1,6 @@
 #pragma once
+#include "srrg_boss/eigen_boss_plugin.h"
+#include "srrg_boss/serializable.h"
 #include "base_message.h"
 #include <string>
 #include <iostream>
@@ -7,13 +9,17 @@
 
 namespace srrg_core {
 
-  class StaticTransformMessage: public BaseMessage {
+  class StaticTransformMessage: public BaseMessage, public srrg_boss::Serializable {
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     friend class StaticTransformTree;
     StaticTransformMessage(const std::string& from_frame_id = "", 
 		     const std::string& to_frame_id="", 
 		     const Eigen::Isometry3f& transform=Eigen::Isometry3f::Identity());
+
+    virtual void serialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context);
+    virtual void deserialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context);
+
     virtual const std::string& tag() const;
     virtual void fromStream(std::istream& is);
     virtual void  toStream(std::ostream& os) const;

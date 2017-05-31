@@ -23,4 +23,5 @@ add_library(srrg_txt_io_library SHARED
 )
 target_link_libraries(srrg_txt_io_library
   ${OpenCV_LIBS}
+  ${catkin_LIBRARIES}
 )

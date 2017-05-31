@@ -1,10 +1,11 @@
 #pragma once
 #include <string>
 #include <iostream>
+
 namespace srrg_core {
 
 
-  class BaseMessage{
+  class BaseMessage {
   public:
     BaseMessage();
     virtual ~BaseMessage();

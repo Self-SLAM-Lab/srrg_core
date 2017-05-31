@@ -20,6 +20,20 @@ namespace srrg_core {
       _parent(0){
     }
 
+  void StaticTransformMessage::serialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context) {
+    data.setString("from_frame_id", _from_frame_id);
+    data.setString("to_frame_id", _to_frame_id);
+    t2v(_transform).toBOSS(data, "transform");
+  }
+
+  void StaticTransformMessage::deserialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context) {
+    _from_frame_id=data.getString("from_frame_id");
+    _to_frame_id=data.getString("to_frame_id");
+    Vector6f transform_v;
+    transform_v.fromBOSS(data, "transform");
+    _transform=v2t(transform_v);
+  }
+
   void StaticTransformMessage::fromStream(std::istream& is) {
     is >> _from_frame_id;
     is >> _to_frame_id;

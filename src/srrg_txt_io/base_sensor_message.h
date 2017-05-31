@@ -1,4 +1,6 @@
 #pragma once
+#include "srrg_boss/eigen_boss_plugin.h"
+#include "srrg_boss/serializable.h"
 #include "base_message.h"
 #include <string>
 #include <iostream>
@@ -7,12 +9,19 @@
 
 namespace srrg_core {
 
-  class BaseSensorMessage: public BaseMessage {
+  class BaseSensorMessage: public BaseMessage, public srrg_boss::Serializable {
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     BaseSensorMessage(const std::string& topic="", const std::string& frame_id="",int seq=-1, double timestamp=-1);
+
+    
+    virtual void serialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context);
+    virtual void deserialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context);
+
+    
     virtual void fromStream(std::istream& is);
     virtual void  toStream(std::ostream& os) const;
+    
     inline bool hasOdom() const  {return _has_odom;}
     inline bool hasImu() const  {return _has_imu;}
     inline const Eigen::Isometry3f& offset() const {return _offset;}
