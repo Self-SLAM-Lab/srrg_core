@@ -47,6 +47,10 @@ find_package(OpenCV REQUIRED)
 message("using OpenCV version ${OpenCV_VERSION} (${OpenCV_DIR})")
 include_directories(${OpenCV_INCLUDE_DIRS})
 
+# Find OpenGL
+find_package(OpenGL REQUIRED)
+include_directories(${OPENGL_INCLUDE})
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed

@@ -22,6 +22,8 @@ add_library(srrg_txt_io_library SHARED
   tf_overrider_trigger.cpp tf_overrider_trigger.h  
 )
 target_link_libraries(srrg_txt_io_library
+  srrg_core_types_library
   ${OpenCV_LIBS}
+  ${OPENGL_gl_LIBRARY} 
   ${catkin_LIBRARIES}
 )

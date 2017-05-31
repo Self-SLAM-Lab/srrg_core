@@ -13,6 +13,19 @@ namespace srrg_core {
     _depth_scale = 1e-3;
   }
 
+  const cv::Mat& BaseImageMessage::image()  {
+    fetch();
+    return _image_reference.get()->image();
+  }
+
+  void BaseImageMessage::setImage(cv::Mat& image_) {
+    ImageData* image_data = new ImageData;
+    image_data->image() = image_;
+    _image_reference.set(image_data);
+    _is_fetched=true;
+    taint();
+  }
+
   BaseImageMessage::~BaseImageMessage() {
     release();
   }
@@ -46,21 +59,31 @@ namespace srrg_core {
   void BaseImageMessage::_fetch() {
     const std::string& full_filename = binaryFullFilename();
     const std::string& extension     = full_filename.substr(full_filename.find_last_of(".") + 1);
+    ifstream is (full_filename);
+    ImageData* image_data=new ImageData();
+    image_data->read(is);
+    _image_reference.set(image_data);
+    untaint();
+    /*
     if (extension == "png" || extension =="ppm") {
       _image = cv::imread(full_filename.c_str(), CV_LOAD_IMAGE_COLOR);
       cv::cvtColor(_image, _image, CV_BGR2RGB);
     } else {
       _image = cv::imread(full_filename.c_str(), CV_LOAD_IMAGE_ANYDEPTH);
     }
+    */
   }
   
   void BaseImageMessage::_release(){
-    _image.release();
+    _image_reference.set(0);
+    //_image.release();
   }
 
   void BaseImageMessage::_writeBack(){
     std::string full_filename = binaryFullFilename();
-    
+    ofstream os (full_filename);
+    _image_reference.get()->write(os);
+    /*
     //_image.copyTo(image_to_write);
     if (_image.type()==CV_8UC3) {
       cv::Mat image_to_write;
@@ -69,21 +92,30 @@ namespace srrg_core {
     } else {
       cv::imwrite(full_filename.c_str(), _image);
     }
+    */
     untaint();
   }
-  
+
+  void BaseImageMessage::serialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context) {
+    BaseSensorMessage::serialize(data,context);
+  }
+  void BaseImageMessage::deserialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context) {
+    BaseSensorMessage::deserialize(data,context);
+  }
+
   const std::string BaseImageMessage::_tag="BASE_IMAGE_MESSAGE";
 
   const std::string& BaseImageMessage::tag() const { return _tag; }
 
   std::string BaseImageMessage::extension() const {
-    if (_image.type()==CV_16UC1||_image.type()==CV_8UC1) {
-       return "pgm";
-    } else if (_image.type()==CV_8UC3) {
-      return  "png";
-    } else {
-      cerr << " image type: " << _image.type() << "rows x cols: " << _image.rows << "x" << _image.cols << endl;
-      throw std::runtime_error("Unknown extension for image of this type");
-    }
+    return _image_reference.get()->const_extension();
+    // if (_image.type()==CV_16UC1||_image.type()==CV_8UC1) {
+    //    return "pgm";
+    // } else if (_image.type()==CV_8UC3) {
+    //   return  "png";
+    // } else {
+    //   cerr << " image type: " << _image.type() << "rows x cols: " << _image.rows << "x" << _image.cols << endl;
+    //   throw std::runtime_error("Unknown extension for image of this type");
+    // }
   }
 }
