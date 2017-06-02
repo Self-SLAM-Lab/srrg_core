@@ -30,7 +30,23 @@ void CPoseMessage::fromStream( std::istream& p_isMessage )
     p_isMessage >> m_vecPosition[1];
     p_isMessage >> m_vecPosition[2];
 }
-  
+
+  void CPoseMessage::serialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context) {
+    BaseSensorMessage::serialize(data,context);
+    m_vecOrientationEulerAngles.matrix().toBOSS(data, "orientation_euler");
+    m_vecOrientationQuaternion.matrix().toBOSS(data, "orientation_quaternion");
+    m_matOrientationMatrix.toBOSS(data, "orientation_matrix");
+    m_vecPosition.toBOSS(data, "position");
+  }
+
+  void CPoseMessage::deserialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context) {
+    BaseSensorMessage::deserialize(data,context);
+    m_vecOrientationEulerAngles.matrix().fromBOSS(data, "orientation_euler");
+    m_vecOrientationQuaternion.matrix().fromBOSS(data, "orientation_quaternion");
+    m_matOrientationMatrix.fromBOSS(data, "orientation_matrix");
+    m_vecPosition.fromBOSS(data, "position");
+  }
+
 void CPoseMessage::toStream( std::ostream& p_osMessage ) const
 {
     //ds stream the base elements
@@ -51,7 +67,7 @@ void CPoseMessage::toStream( std::ostream& p_osMessage ) const
     p_osMessage << chBuffer;
 }
 
-//ds register the message for reading
-static MessageFactory::MessageRegisterer< CPoseMessage > m_cRegisterer;
-
+  //ds register the message for reading
+  static MessageFactory::MessageRegisterer< CPoseMessage > m_cRegisterer;
+  BOSS_REGISTER_CLASS(CPoseMessage);
 } //namespace srrg_core

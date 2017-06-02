@@ -1,6 +1,5 @@
 #pragma once
 #include "srrg_boss/eigen_boss_plugin.h"
-#include "srrg_boss/serializable.h"
 #include "base_message.h"
 #include <string>
 #include <iostream>
@@ -9,7 +8,7 @@
 
 namespace srrg_core {
 
-  class BaseSensorMessage: public BaseMessage, public srrg_boss::Serializable {
+  class BaseSensorMessage: public BaseMessage {
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     BaseSensorMessage(const std::string& topic="", const std::string& frame_id="",int seq=-1, double timestamp=-1);

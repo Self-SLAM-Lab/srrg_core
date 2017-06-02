@@ -29,7 +29,7 @@ JointStateMessage::JointStateMessage( const std::string& p_strTopic, const std::
   
   void JointStateMessage::deserialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context) {
     BaseSensorMessage::deserialize(data, context);
-    srrg_boss::ArrayData& joints_array=*dynamic_cast<srrg_boss::ArrayData*>(data.getField("joints"));
+    srrg_boss::ArrayData& joints_array=data.getField("joints")->getArray();
     _joints.resize(joints_array.size());
     for (size_t i=0; i<joints_array.size(); ++i){
       srrg_boss::ObjectData& joint_object=dynamic_cast<srrg_boss::ObjectData&>(joints_array[i]);

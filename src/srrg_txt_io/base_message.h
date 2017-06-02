@@ -1,11 +1,13 @@
 #pragma once
 #include <string>
 #include <iostream>
+#include "srrg_boss/serializable.h"
 
 namespace srrg_core {
 
+  enum Format {AUTODETECT=0x0, BOSS=0x1, TXTIO=0x2};
 
-  class BaseMessage {
+  class BaseMessage: public srrg_boss::Serializable {
   public:
     BaseMessage();
     virtual ~BaseMessage();

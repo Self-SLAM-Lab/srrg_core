@@ -15,23 +15,10 @@ namespace srrg_core {
     _file_prefix = file_prefix;
   }
 
-    MessageDumperTrigger::MessageDumperTrigger(SensorMessageSorter* sorter,
-					       int priority,
-					       srrg_boss::Serializer* serializer) :
-    SensorMessageSorter::Trigger(sorter, priority){
-    _writer = 0;
-    _serializer=serializer;
-    _file_prefix = "";
-  }
 
   void MessageDumperTrigger::action(std::tr1::shared_ptr<BaseSensorMessage> msg){
     if (_writer) {
       _writer->writeMessage(*msg);
-      msg->writeBack();
-    }
-    if (_serializer){
-      msg->untaint();
-      _serializer->writeObject(*msg);
     }
   }
 
