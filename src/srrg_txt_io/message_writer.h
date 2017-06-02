@@ -22,5 +22,5 @@ namespace srrg_core {
     std::string _binary_file_prefix;
 
   };
-
+ 
 }

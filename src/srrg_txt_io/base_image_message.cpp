@@ -15,7 +15,9 @@ namespace srrg_core {
 
   const cv::Mat& BaseImageMessage::image()  {
     fetch();
-    return _image_reference.get()->image();
+    ImageData* image_data=_image_reference.get();
+    cv::Mat image=image_data->image();
+    return image_data->image();
   }
 
   void BaseImageMessage::setImage(cv::Mat& image_) {
@@ -64,6 +66,7 @@ namespace srrg_core {
     image_data->read(is);
     _image_reference.set(image_data);
     untaint();
+    cerr << "fetched" << endl;
     /*
     if (extension == "png" || extension =="ppm") {
       _image = cv::imread(full_filename.c_str(), CV_LOAD_IMAGE_COLOR);
@@ -98,9 +101,26 @@ namespace srrg_core {
 
   void BaseImageMessage::serialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context) {
     BaseSensorMessage::serialize(data,context);
+    if (_depth_scale>0)
+      data.setFloat("depth_scale", _depth_scale);
+    srrg_boss::ObjectData * blob_data=new srrg_boss::ObjectData();
+    data.setField("image", blob_data);
+    _image_reference.setNameAttribute(_binaryFilename());
+    _image_reference.serialize(*blob_data,context);
+    untaint();
   }
+  
   void BaseImageMessage::deserialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context) {
     BaseSensorMessage::deserialize(data,context);
+    _depth_scale=0;
+    if (data.getField("depth_scale")){
+      _depth_scale=data.getFloat("depth_scale");
+    }
+    srrg_boss::ObjectData * blob_data = static_cast<srrg_boss::ObjectData *>(data.getField("image"));
+    _image_reference.deserialize(*blob_data,context);
+    _binary_filename=_image_reference.nameAttribute();
+    untaint();
+    _is_fetched=true; // let boss handle the fetching
   }
 
   const std::string BaseImageMessage::_tag="BASE_IMAGE_MESSAGE";
@@ -118,4 +138,7 @@ namespace srrg_core {
     //   throw std::runtime_error("Unknown extension for image of this type");
     // }
   }
+
+  BOSS_REGISTER_CLASS(BaseImageMessage);
+
 }

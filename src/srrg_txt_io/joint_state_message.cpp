@@ -12,6 +12,35 @@ JointStateMessage::JointStateMessage( const std::string& p_strTopic, const std::
     //ds nothing to do
 }
 
+  void JointStateMessage::serialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context) {
+    BaseSensorMessage::serialize(data, context);
+    srrg_boss::ArrayData* joints_array=new srrg_boss::ArrayData();
+    for (size_t i=0; i<_joints.size(); ++i){
+      JointStatus& joint=_joints[i];
+      srrg_boss::ObjectData* joint_object=new srrg_boss::ObjectData;
+      joint_object->setString("name", joint.name);
+      joint_object->setDouble("position", joint.position);
+      joint_object->setDouble("velocity", joint.velocity);
+      joint_object->setDouble("effort", joint.effort);
+      joints_array->push_back(joint_object);
+    }
+    data.setField("joints", joints_array);
+  }
+  
+  void JointStateMessage::deserialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context) {
+    BaseSensorMessage::deserialize(data, context);
+    srrg_boss::ArrayData& joints_array=*dynamic_cast<srrg_boss::ArrayData*>(data.getField("joints"));
+    _joints.resize(joints_array.size());
+    for (size_t i=0; i<joints_array.size(); ++i){
+      srrg_boss::ObjectData& joint_object=dynamic_cast<srrg_boss::ObjectData&>(joints_array[i]);
+      JointStatus& joint=_joints[i];
+      joint.name=joint_object.getString("name");
+      joint.position=joint_object.getDouble("position");
+      joint.velocity=joint_object.getDouble("velocity");
+      joint.effort=joint_object.getDouble("effort");
+    }
+  }
+
 const std::string JointStateMessage::m_strTag = "JOINT_STATE_MESSAGE";
   
 void JointStateMessage::fromStream( std::istream& p_isMessage )
@@ -42,7 +71,9 @@ void JointStateMessage::toStream( std::ostream& p_osMessage ) const
     }
 }
 
-//ds register the message for reading
-static MessageFactory::MessageRegisterer< JointStateMessage > m_cRegisterer;
+  //ds register the message for reading
+  static MessageFactory::MessageRegisterer< JointStateMessage > m_cRegisterer;
 
+  BOSS_REGISTER_CLASS(JointStateMessage);
+  
 } //namespace srrg_core

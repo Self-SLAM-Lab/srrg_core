@@ -23,7 +23,8 @@ add_library(srrg_txt_io_library SHARED
 )
 target_link_libraries(srrg_txt_io_library
   srrg_core_types_library
+  srrg_boss_library
   ${OpenCV_LIBS}
-  ${OPENGL_gl_LIBRARY} 
+  ${OPENGL_gl_LIBRARY}
   ${catkin_LIBRARIES}
 )

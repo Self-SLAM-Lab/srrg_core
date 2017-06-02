@@ -26,7 +26,10 @@ public:
 
 //ds accessors
 public:
+    virtual void serialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context);
+    virtual void deserialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context);
 
+  
   //ds overrides
   virtual void fromStream( std::istream& p_isMessage );
   virtual void toStream( std::ostream& p_osMessage ) const;
