@@ -104,6 +104,5 @@ namespace srrg_core {
     }
   }
 
-
-
+  
 }

@@ -15,6 +15,7 @@ namespace srrg_core {
 
   protected:
     MessageWriter* _writer;
+    srrg_boss::Serializer* _serializer;
     std::string _file_prefix;
   };
 }

@@ -9,7 +9,7 @@
 
 namespace srrg_core {
 
-  class StaticTransformMessage: public BaseMessage, public srrg_boss::Serializable {
+  class StaticTransformMessage: public BaseMessage {
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     friend class StaticTransformTree;

@@ -16,6 +16,18 @@ namespace srrg_core {
 
   const std::string& PinholeImageMessage::tag() const { return _tag; }
 
+  // BOSS interface
+  void PinholeImageMessage::serialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context) {
+    BaseImageMessage::serialize(data,context);
+    _camera_matrix.toBOSS(data, "camera_matrix");
+  }
+
+  void PinholeImageMessage::deserialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context) {
+    BaseImageMessage::deserialize(data,context);
+    _camera_matrix.fromBOSS(data, "camera_matrix");
+  }
+
+  
   void PinholeImageMessage::fromStream(std::istream& is_) {
     BaseImageMessage::fromStream(is_);
 
@@ -39,4 +51,7 @@ namespace srrg_core {
   }
 
   static MessageFactory::MessageRegisterer<PinholeImageMessage> registerer;
+
+  BOSS_REGISTER_CLASS(PinholeImageMessage);
+  
 }

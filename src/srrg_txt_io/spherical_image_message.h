@@ -10,6 +10,12 @@ namespace srrg_core {
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     SphericalImageMessage(const std::string& topic="", const std::string& frame_id="", int seq=-1, double timestamp=-1);
+
+    // BOSS interface
+    virtual void serialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context);
+    virtual void deserialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context);
+
+    // TXTIO interface
     virtual const std::string& tag() const;
     virtual void fromStream(std::istream& is);
     virtual void toStream(std::ostream& os) const;
