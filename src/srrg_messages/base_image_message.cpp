@@ -66,7 +66,6 @@ namespace srrg_core {
     image_data->read(is);
     _image_reference.set(image_data);
     untaint();
-    cerr << "fetched" << endl;
     /*
     if (extension == "png" || extension =="ppm") {
       _image = cv::imread(full_filename.c_str(), CV_LOAD_IMAGE_COLOR);

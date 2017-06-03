@@ -74,7 +74,16 @@ int main(int argc, char ** argv) {
   writer.open(outfilename);
   for (auto it: messages) {
     BaseMessage* msg=it.second;
+
+    // if it is an image message, we load it just to be sure
+    // it can be written down
+    BaseImageMessage* img_msg=dynamic_cast<BaseImageMessage*>(msg);
+    if (img_msg){
+      cv::Mat image=img_msg->image();
+    }
+      
     writer.writeMessage(*msg);
+    delete msg;
   }
 
   writer.close();

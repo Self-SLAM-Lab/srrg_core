@@ -10,11 +10,6 @@ target_link_libraries(srrg_message_converter_euroc_app
   srrg_messages_library
 )
 
-add_executable(srrg_message_merger_app srrg_message_merger_app.cpp)
-target_link_libraries(srrg_message_merger_app
-  srrg_system_utils_library
-  srrg_messages_library
-)
 
 
 add_executable(srrg_message_sorter_app srrg_message_sorter_app.cpp)
