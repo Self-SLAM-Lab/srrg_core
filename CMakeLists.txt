@@ -145,7 +145,6 @@ catkin_package(
   srrg_image_utils_library
   srrg_messages_library
   srrg_path_map_library
-  srrg_bresenham_library
   CATKIN_DEPENDS srrg_boss
 #  DEPENDS system_lib
 )
