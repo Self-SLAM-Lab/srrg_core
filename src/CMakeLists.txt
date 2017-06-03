@@ -1,5 +1,6 @@
 add_subdirectory(srrg_types)
 add_subdirectory(srrg_system_utils)
+add_subdirectory(srrg_image_utils)
 add_subdirectory(srrg_messages)
 add_subdirectory(srrg_path_map)
 add_subdirectory(srrg_bresenham)

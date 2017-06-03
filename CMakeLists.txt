@@ -139,7 +139,13 @@ include_directories(${OPENGL_INCLUDE})
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS src
-  LIBRARIES srrg_core_types_library srrg_system_utils_library srrg_messages_library srrg_path_map_library srrg_bresenham_library
+  LIBRARIES
+  srrg_core_types_library
+  srrg_system_utils_library
+  srrg_image_utils_library
+  srrg_messages_library
+  srrg_path_map_library
+  srrg_bresenham_library
   CATKIN_DEPENDS srrg_boss
 #  DEPENDS system_lib
 )
