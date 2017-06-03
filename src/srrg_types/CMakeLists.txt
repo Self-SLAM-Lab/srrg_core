@@ -1,5 +1,5 @@
 add_library(srrg_core_types_library
-  cloud.cpp cloud.h
+  cloud_3d.cpp cloud_3d.h
   image_data.cpp image_data.h
   )
 

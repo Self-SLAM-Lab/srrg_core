@@ -2,7 +2,7 @@
 
 #include <srrg_types/defs.h>
 
-#include <srrg_types/cloud.h>
+#include <srrg_types/cloud_3d.h>
 
 namespace srrg_nicp {
 
@@ -34,8 +34,8 @@ namespace srrg_nicp {
   //! points that are closer than distanceThreshold are merged based on the
   //scaling values
   //! if the normals are compatible
-  void merge(srrg_core::FloatImage& destBuffer, srrg_core::IndexImage& destIndices, srrg_core::Cloud& dest,
-	     srrg_core::FloatImage& srcBuffer, srrg_core::IndexImage& srcIndices, srrg_core::Cloud& src,
+  void merge(srrg_core::FloatImage& destBuffer, srrg_core::IndexImage& destIndices, srrg_core::Cloud3D& dest,
+	     srrg_core::FloatImage& srcBuffer, srrg_core::IndexImage& srcIndices, srrg_core::Cloud3D& src,
 	     float normalThreshold = 1, float distanceThreshold = 0.2);
 
   

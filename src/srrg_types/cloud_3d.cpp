@@ -1,4 +1,4 @@
-#include "cloud.h"
+#include "cloud_3d.h"
 
 #ifdef _GO_PARALLEL_
 #include <omp.h>
@@ -16,7 +16,7 @@ namespace srrg_core {
   using namespace srrg_boss;
   using namespace srrg_core;
 
-  void Cloud::add(const Cloud& other) {
+  void Cloud3D::add(const Cloud3D& other) {
     if (&other == this)
       return;
     size_t k = size();
@@ -30,7 +30,7 @@ namespace srrg_core {
   }
 
 
-  void Cloud::draw(int name) const {
+  void Cloud3D::draw(int name) const {
     if (name > -1)
       glPushName(name);
 
@@ -62,7 +62,7 @@ namespace srrg_core {
       glPopName();
   }
 
-  void Cloud::transformInPlace(const Eigen::Isometry3f& T) {
+  void Cloud3D::transformInPlace(const Eigen::Isometry3f& T) {
     Eigen::Matrix3f R = T.linear();
 #ifdef _GO_PARALLEL_
 #pragma omp parallel for
@@ -81,7 +81,7 @@ namespace srrg_core {
     }
   }
 
-  void Cloud::transform(Cloud& other, const Eigen::Isometry3f& T) const {
+  void Cloud3D::transform(Cloud3D& other, const Eigen::Isometry3f& T) const {
     other.resize(size());
     Eigen::Matrix3f R = T.linear();
 #ifdef _GO_PARALLEL_
@@ -130,7 +130,7 @@ namespace srrg_core {
   };
 
   //! clips to a maxRange around a pose
-  void Cloud::clip(float range, const Eigen::Isometry3f& pose) {
+  void Cloud3D::clip(float range, const Eigen::Isometry3f& pose) {
     Eigen::Isometry3f T = pose.inverse();
     range *= range;
     int k = 0;
@@ -146,14 +146,14 @@ namespace srrg_core {
   }
 
 
-  void Cloud::voxelize(float res) {
+  void Cloud3D::voxelize(float res) {
     float ires = 1. / res;
     std::vector<IndexTriplet> voxels(size());
     for (size_t i= 0; i < size(); ++i) {
       const RichPoint& p=(*this)[i];
       voxels[i] = IndexTriplet(p.point(), i , ires);
     }
-    Cloud sparse_model;
+    Cloud3D sparse_model;
     sparse_model.resize(size());
     std::sort(voxels.begin(), voxels.end());
     int k = -1;
@@ -184,7 +184,7 @@ namespace srrg_core {
     os.write(dp, sizeof(T));
   }
 
-  void Cloud::write(ostream& os) const {
+  void Cloud3D::write(ostream& os) const {
     size_t s=size();
     writeDatum(os, s);
     for(size_t i=0; i<s; i++) {
@@ -210,7 +210,7 @@ namespace srrg_core {
   }
 
 
-  void Cloud::computeBoundingBox(Eigen::Vector3f& lower, Eigen::Vector3f& higher) const {
+  void Cloud3D::computeBoundingBox(Eigen::Vector3f& lower, Eigen::Vector3f& higher) const {
     const float low=-std::numeric_limits<float>::max();
     const float up=std::numeric_limits<float>::max();
     lower=Eigen::Vector3f(up, up, up);
@@ -232,7 +232,7 @@ namespace srrg_core {
     }
   }
 
-  bool Cloud::read(istream& is) {
+  bool Cloud3D::read(istream& is) {
     clear();
     size_t s;
     readDatum(is, s);
@@ -255,7 +255,7 @@ namespace srrg_core {
     return true;
   }
 
-  BOSS_REGISTER_BLOB(Cloud);
+  BOSS_REGISTER_BLOB(Cloud3D);
 
 }
 

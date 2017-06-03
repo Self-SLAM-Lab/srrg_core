@@ -89,7 +89,7 @@ typedef std::vector<RichPoint, Eigen::aligned_allocator<RichPoint> >
    This class represents a 3D model, as a collection of rich points
  */
 
-struct Cloud : public srrg_boss::BLOB, public RichPointVector {
+struct Cloud3D : public srrg_boss::BLOB, public RichPointVector {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
   //! applies the transformation to each entity in the model, doing side effect.
@@ -101,10 +101,10 @@ struct Cloud : public srrg_boss::BLOB, public RichPointVector {
   //output in dest.
   //! @param dest: output
   //! @param T: the transform
-  void transform(Cloud& dest, const Eigen::Isometry3f& T) const;
+  void transform(Cloud3D& dest, const Eigen::Isometry3f& T) const;
 
   //! adds other to this point cloud, doing side effect
-  void add(const Cloud& other);
+  void add(const Cloud3D& other);
 
   //! draws a cloud if invoked in a gl context
   virtual void draw(int name = -1) const;
@@ -131,7 +131,7 @@ struct Cloud : public srrg_boss::BLOB, public RichPointVector {
 
 };
 
-typedef srrg_boss::BLOBReference<Cloud> CloudBLOBReference;
+typedef srrg_boss::BLOBReference<Cloud3D> Cloud3DBLOBReference;
 
 
 }

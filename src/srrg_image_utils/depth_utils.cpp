@@ -446,8 +446,8 @@ namespace srrg_nicp {
 #define checkCumVal(x,msg)
 #endif
 
-  void merge(FloatImage& destBuffer, IndexImage& destIndices, Cloud& dest,
-	     FloatImage& srcBuffer, IndexImage& srcIndices, Cloud& src,
+  void merge(FloatImage& destBuffer, IndexImage& destIndices, Cloud3D& dest,
+	     FloatImage& srcBuffer, IndexImage& srcIndices, Cloud3D& src,
 	     float normalThreshold,
 	     float distanceThreshold) {
 
