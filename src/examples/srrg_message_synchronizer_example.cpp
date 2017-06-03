@@ -1,11 +1,11 @@
 #include <fstream>
 
 #include "srrg_system_utils/system_utils.h"
-#include "srrg_txt_io/laser_message.h"
-#include "srrg_txt_io/message_reader.h"
-#include "srrg_txt_io/message_timestamp_synchronizer.h"
-#include "srrg_txt_io/pinhole_image_message.h"
-#include "srrg_txt_io/sensor_message_sorter.h"
+#include "srrg_messages/laser_message.h"
+#include "srrg_messages/message_reader.h"
+#include "srrg_messages/message_timestamp_synchronizer.h"
+#include "srrg_messages/pinhole_image_message.h"
+#include "srrg_messages/sensor_message_sorter.h"
 
 using namespace std;
 using namespace srrg_core;
@@ -16,9 +16,9 @@ LaserMessage l;
 MessageTimestampSynchronizer synchronizer;
 
 const char* banner[] = {
-    "srrg_txt_io_synchronizer_example: synchronizer example that generates associations between depth and rgb images contained on a file written with txt_io",
+    "srrg_messages_synchronizer_example: synchronizer example that generates associations between depth and rgb images contained on a file written with txt_io",
     "",
-    "usage: srrg_txt_io_synchronizer_example <dump_file>",
+    "usage: srrg_messages_synchronizer_example <dump_file>",
     0
 };
 

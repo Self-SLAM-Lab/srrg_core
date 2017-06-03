@@ -1,7 +1,7 @@
 #include <sys/stat.h>
-#include "srrg_txt_io/message_writer.h"
-#include "srrg_txt_io/pinhole_image_message.h"
-#include "srrg_txt_io/imu_message.h"
+#include "srrg_messages/message_writer.h"
+#include "srrg_messages/pinhole_image_message.h"
+#include "srrg_messages/imu_message.h"
 
 //ds opencv
 #include <opencv2/opencv.hpp>
@@ -211,7 +211,7 @@ int32_t main(int32_t argc, char** argv) {
 
   //ds arguments at least 2 - optional topic names
   if (argc < 3) {
-    std::cerr << "ERROR: invalid call - use ./srrg_txt_io_converter_euroc_app -o sequence_name.txt (in the respective euroc ASL format folder)" << std::endl;
+    std::cerr << "ERROR: invalid call - use ./srrg_messages_converter_euroc_app -o sequence_name.txt (in the respective euroc ASL format folder)" << std::endl;
     return 0;
   }
 

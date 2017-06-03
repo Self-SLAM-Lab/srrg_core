@@ -1,12 +1,12 @@
 #include <fstream>
 #include <opencv2/highgui/highgui.hpp>
 #include "srrg_system_utils/system_utils.h"
-#include "srrg_txt_io/laser_message.h"
-#include "srrg_txt_io/message_reader.h"
-#include "srrg_txt_io/message_writer.h"
-#include "srrg_txt_io/pinhole_image_message.h"
-#include "srrg_txt_io/sensor_message_sorter.h"
-#include "srrg_txt_io/base_sensor_message.h"
+#include "srrg_messages/laser_message.h"
+#include "srrg_messages/message_reader.h"
+#include "srrg_messages/message_writer.h"
+#include "srrg_messages/pinhole_image_message.h"
+#include "srrg_messages/sensor_message_sorter.h"
+#include "srrg_messages/base_sensor_message.h"
 
 using namespace std;
 using namespace srrg_core;

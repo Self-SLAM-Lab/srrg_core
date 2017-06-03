@@ -1,24 +1,24 @@
-add_executable(srrg_txt_io_converter_kitti_app srrg_txt_io_converter_kitti_app.cpp)
-target_link_libraries(srrg_txt_io_converter_kitti_app
+add_executable(srrg_message_converter_kitti_app srrg_message_converter_kitti_app.cpp)
+target_link_libraries(srrg_message_converter_kitti_app
   srrg_system_utils_library
-  srrg_txt_io_library
+  srrg_messages_library
 )
 
-add_executable(srrg_txt_io_converter_euroc_app srrg_txt_io_converter_euroc_app.cpp)
-target_link_libraries(srrg_txt_io_converter_euroc_app
+add_executable(srrg_message_converter_euroc_app srrg_message_converter_euroc_app.cpp)
+target_link_libraries(srrg_message_converter_euroc_app
   srrg_system_utils_library
-  srrg_txt_io_library
+  srrg_messages_library
 )
 
-add_executable(srrg_txt_io_merger_app srrg_txt_io_merger_app.cpp)
-target_link_libraries(srrg_txt_io_merger_app
+add_executable(srrg_message_merger_app srrg_message_merger_app.cpp)
+target_link_libraries(srrg_message_merger_app
   srrg_system_utils_library
-  srrg_txt_io_library
+  srrg_messages_library
 )
 
 
-add_executable(srrg_txt_io_sorter_app srrg_txt_io_sorter_app.cpp)
-target_link_libraries(srrg_txt_io_sorter_app
+add_executable(srrg_message_sorter_app srrg_message_sorter_app.cpp)
+target_link_libraries(srrg_message_sorter_app
   srrg_system_utils_library
-  srrg_txt_io_library
+  srrg_messages_library
 )

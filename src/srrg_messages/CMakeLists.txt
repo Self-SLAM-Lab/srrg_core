@@ -1,4 +1,4 @@
-add_library(srrg_txt_io_library SHARED
+add_library(srrg_messages_library SHARED
   base_image_message.cpp base_image_message.h
   base_message.cpp base_message.h
   base_sensor_message.cpp base_sensor_message.h
@@ -21,7 +21,7 @@ add_library(srrg_txt_io_library SHARED
   static_transform_tree.cpp static_transform_tree.h
   tf_overrider_trigger.cpp tf_overrider_trigger.h  
 )
-target_link_libraries(srrg_txt_io_library
+target_link_libraries(srrg_messages_library
   srrg_core_types_library
   srrg_boss_library
   ${OpenCV_LIBS}

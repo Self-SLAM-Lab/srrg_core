@@ -4,9 +4,9 @@
 #include <string>
 #include <map>
 #include "srrg_system_utils/system_utils.h"
-#include "srrg_txt_io/message_reader.h"
-#include "srrg_txt_io/message_writer.h"
-#include "srrg_txt_io/base_sensor_message.h"
+#include "srrg_messages/message_reader.h"
+#include "srrg_messages/message_writer.h"
+#include "srrg_messages/base_sensor_message.h"
 
 using namespace std;
 using namespace srrg_core;

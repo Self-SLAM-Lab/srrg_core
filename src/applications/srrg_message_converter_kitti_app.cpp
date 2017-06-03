@@ -1,7 +1,7 @@
 #include <fstream>
 #include <sys/stat.h>
-#include "srrg_txt_io/message_writer.h"
-#include "srrg_txt_io/pinhole_image_message.h"
+#include "srrg_messages/message_writer.h"
+#include "srrg_messages/pinhole_image_message.h"
 #include "srrg_types/defs.h"
 
 using namespace srrg_core;
@@ -38,8 +38,8 @@ int32_t main(int32_t argc, char** argv) {
 
   //ds arguments: folder_kitti
   if (argc != 2) {
-    std::cerr << "ERROR: invalid call - use ./srrg_txt_io_converter_kitti_app kitti_sequence_number (in the respective kitti sequence folder)" << std::endl;
-    std::cerr << "       e.g. ./srrg_txt_io_converter_kitti_app 00" << std::endl;
+    std::cerr << "ERROR: invalid call - use ./srrg_messages_converter_kitti_app kitti_sequence_number (in the respective kitti sequence folder)" << std::endl;
+    std::cerr << "       e.g. ./srrg_messages_converter_kitti_app 00" << std::endl;
     return 0;
   }
 
