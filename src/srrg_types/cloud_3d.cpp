@@ -36,7 +36,7 @@ namespace srrg_core {
 
     glBegin(GL_POINTS);
     for (size_t i = 0; i<size(); i++){
-      const RichPoint& rp = at(i);
+      const RichPoint3D& rp = at(i);
       const Eigen::Vector3f& p = rp.point();
       const Eigen::Vector3f& n = rp.normal();
       if (n.squaredNorm()) {
@@ -135,7 +135,7 @@ namespace srrg_core {
     range *= range;
     int k = 0;
     for (size_t i = 0; i < size(); i++) {
-      const RichPoint& p = at(i);
+      const RichPoint3D& p = at(i);
       Eigen::Vector3f other_p = T * p.point();
       if (other_p.squaredNorm() < range) {
 	at(k) = p;
@@ -150,7 +150,7 @@ namespace srrg_core {
     float ires = 1. / res;
     std::vector<IndexTriplet> voxels(size());
     for (size_t i= 0; i < size(); ++i) {
-      const RichPoint& p=(*this)[i];
+      const RichPoint3D& p=(*this)[i];
       voxels[i] = IndexTriplet(p.point(), i , ires);
     }
     Cloud3D sparse_model;
@@ -169,7 +169,7 @@ namespace srrg_core {
       //cerr << voxels[i].x << " " << voxels[i].y << " " << voxels[i].x <<  endl;
     }
     for (int i = 0; i < k; i++) {
-      RichPoint& p=sparse_model[i];
+      RichPoint3D& p=sparse_model[i];
       if (p.accumulator() <= 0)
 	throw std::runtime_error("null accumulator");
       p.normalize();
@@ -188,7 +188,7 @@ namespace srrg_core {
     size_t s=size();
     writeDatum(os, s);
     for(size_t i=0; i<s; i++) {
-      const RichPoint& p=at(i);
+      const RichPoint3D& p=at(i);
       writeDatum(os, p.point().x());
       writeDatum(os, p.point().y());
       writeDatum(os, p.point().z());
@@ -216,7 +216,7 @@ namespace srrg_core {
     lower=Eigen::Vector3f(up, up, up);
     higher=Eigen::Vector3f(low, low, low);
     for(size_t i=0; i<size(); i++) {
-      const RichPoint& p=at(i);
+      const RichPoint3D& p=at(i);
       if (lower.x()>p.point().x())
 	lower.x()=p.point().x();
       if (lower.y()>p.point().y())
@@ -238,7 +238,7 @@ namespace srrg_core {
     readDatum(is, s);
     resize(s);
     for(size_t i=0; i<s; i++) {
-      RichPoint p=at(i);
+      RichPoint3D p=at(i);
       float x,y,z, nx, ny, nz, cx, cy,cz, a;
       readDatum(is, x);
       readDatum(is, y);
@@ -250,7 +250,7 @@ namespace srrg_core {
       readDatum(is, cy);
       readDatum(is, cz);
       readDatum(is, a);
-      at(i) = RichPoint(Eigen::Vector3f(x,y,z), Eigen::Vector3f(nx, ny, nz), a, Eigen::Vector3f(cx, cy, cz));
+      at(i) = RichPoint3D(Eigen::Vector3f(x,y,z), Eigen::Vector3f(nx, ny, nz), a, Eigen::Vector3f(cx, cy, cz));
     } 
     return true;
   }

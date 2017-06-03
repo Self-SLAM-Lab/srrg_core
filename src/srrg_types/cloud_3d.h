@@ -8,9 +8,9 @@
 
 namespace srrg_core {
 
-struct RichPoint {
+struct RichPoint3D {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-  inline RichPoint(const Eigen::Vector3f& p = Eigen::Vector3f::Zero(),
+  inline RichPoint3D(const Eigen::Vector3f& p = Eigen::Vector3f::Zero(),
                    const Eigen::Vector3f& n = Eigen::Vector3f::Zero(),
                    float a = 0.0f,
                    const Eigen::Vector3f& c = Eigen::Vector3f::Zero()) {
@@ -21,9 +21,9 @@ struct RichPoint {
     _is_normalized = true;
   }
 
-  inline RichPoint& operator+=(const RichPoint& rp) {
+  inline RichPoint3D& operator+=(const RichPoint3D& rp) {
     denormalize();
-    RichPoint rp2(rp);
+    RichPoint3D rp2(rp);
     rp2.denormalize();
     _point += rp2._point;
     _normal += rp2._normal;
@@ -42,8 +42,8 @@ struct RichPoint {
     _point = iso * _point;
     _normal = iso.linear() * _normal;
   }
-  inline RichPoint transform(const Eigen::Isometry3f& iso) const {
-    return RichPoint(iso * _point, iso.linear() * _normal, _accumulator, _rgb);
+  inline RichPoint3D transform(const Eigen::Isometry3f& iso) const {
+    return RichPoint3D(iso * _point, iso.linear() * _normal, _accumulator, _rgb);
   }
 
   inline void denormalize() {
@@ -82,14 +82,14 @@ struct RichPoint {
   bool _is_normalized;
 };
 
-typedef std::vector<RichPoint, Eigen::aligned_allocator<RichPoint> >
-    RichPointVector;
+typedef std::vector<RichPoint3D, Eigen::aligned_allocator<RichPoint3D> >
+    RichPoint3DVector;
 
 /**)
    This class represents a 3D model, as a collection of rich points
  */
 
-struct Cloud3D : public srrg_boss::BLOB, public RichPointVector {
+struct Cloud3D : public srrg_boss::BLOB, public RichPoint3DVector {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
   //! applies the transformation to each entity in the model, doing side effect.
