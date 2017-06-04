@@ -6,10 +6,14 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 #set the default path for built libraries to the "lib" directory
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-# To uncomment in the futute
+# To uncomment in the future
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=gnu++11")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
+
+find_package(srrg_cmake_modules REQUIRED)
+set(CMAKE_MODULE_PATH ${srrg_cmake_modules_INCLUDE_DIRS})
+
 set(CMAKE_BUILD_TYPE Release)
 
 message(STATUS "PROCESSOR_TYPE: [${CMAKE_HOST_SYSTEM_PROCESSOR}]")
@@ -18,6 +22,11 @@ if (${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES armv7l)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard -funsafe-math-optimizations")
   message("ENABLING ARM NEON OPTIMIZATIONS")
 endif ()
+
+find_package(OpenCV REQUIRED)
+message(STATUS "${PROJECT_NAME}: OpenCV version ${OpenCV_VERSION}")
+include_directories(${OpenCV_INCLUDE_DIRS})
+message(STATUS "OpenCV_INCLUDE_DIRS: ${OpenCV_INCLUDE_DIRS}")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -33,22 +42,14 @@ find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
-#ds OpenCV: we do not want to use the kinect opencv(3) package
-if("$ENV{ROS_DISTRO}" STREQUAL "kinetic")
-
-  #ds use our custom opencv
-  set(OpenCV_DIR "$ENV{HOME}/source/libraries/opencv/build/release")
-  find_package(OpenCV REQUIRED)
-  message("using custom OpenCV ${OpenCV_VERSION} (${OpenCV_DIR})")
-
-else()
-
-  #ds regular find (TODO enforce custom opencv installation?)
-  find_package(OpenCV REQUIRED)
-  message("using system OpenCV ${OpenCV_VERSION} (${OpenCV_DIR})")
-
-endif()
+#ds OpenCV - OpenCV_DIR might be overwritten by user
+find_package(OpenCV REQUIRED)
+message("using OpenCV version ${OpenCV_VERSION} (${OpenCV_DIR})")
 include_directories(${OpenCV_INCLUDE_DIRS})
+
+# Find OpenGL
+find_package(OpenGL REQUIRED)
+include_directories(${OPENGL_INCLUDE})
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -138,7 +139,12 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS src
-  LIBRARIES srrg_system_utils_library srrg_txt_io_library srrg_distance_map_library srrg_bresenham_library
+  LIBRARIES
+  srrg_core_types_library
+  srrg_system_utils_library
+  srrg_image_utils_library
+  srrg_messages_library
+  srrg_path_map_library
   CATKIN_DEPENDS srrg_boss
 #  DEPENDS system_lib
 )
@@ -154,6 +160,10 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${PROJECT_SOURCE_DIR}/src
 )
+
+#ds help the catkin tool on 16.04 (cmake seems unable to find single libraries, although catkin claims the link_directories call is not required)
+#ds in order to avoid linking against the catkin_LIBRARIES bulk everytime enable this so one can select single libraries
+link_directories(${catkin_LIBRARY_DIRS})
 
 ## Declare a C++ library
 # add_library(srrg_core

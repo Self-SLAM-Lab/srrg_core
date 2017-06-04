@@ -5,6 +5,7 @@
 #include "srrg_messages/message_reader.h"
 #include "srrg_messages/pinhole_image_message.h"
 #include "srrg_messages/sensor_message_sorter.h"
+#include "srrg_boss/deserializer.h"
 
 using namespace std;
 using namespace srrg_core;
@@ -14,7 +15,7 @@ PinholeImageMessage i;
 LaserMessage l;
 
 const char* banner[] = {
-  "srrg_open_file_example_app: example on how to open a txt tio file and read the stuff",
+  "srrg_open_boss_file_example_app: example on how to open a txt tio file and read the stuff",
   "",
   "usage: srrg_open_file_example_app <dump_file>",
   0
@@ -26,21 +27,18 @@ int main(int argc, char ** argv) {
     return 0;
   }
 
-  MessageReader reader;
-  reader.open(argv[1]);
+  srrg_boss::Deserializer reader;
+  reader.setFilePath(argv[1]);
 
-  BaseMessage* msg = 0;
-  while ((msg = reader.readMessage())) {
-    msg->untaint();
+  srrg_boss::Serializable* msg = 0;
+  while ((msg = reader.readObject())) {
     BaseSensorMessage* sensor_msg = dynamic_cast<BaseSensorMessage*>(msg);
-    if (sensor_msg) {
-      cerr << sensor_msg->tag() << endl;
-    }
     PinholeImageMessage* pinhole_image_msg=dynamic_cast<PinholeImageMessage*>(msg);
     if (pinhole_image_msg) {
       cv::imshow(pinhole_image_msg->topic(), pinhole_image_msg->image());
       cv::waitKey(1);
     }
+    delete msg;
   }
   cerr << "done" << endl;
 }
