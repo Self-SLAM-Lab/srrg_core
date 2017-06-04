@@ -2,15 +2,18 @@ add_executable(srrg_txt_io_synchronizer_example srrg_txt_io_synchronizer_example
 target_link_libraries(srrg_txt_io_synchronizer_example
   srrg_system_utils_library
   srrg_txt_io_library
+  ${Boost_LIBRARIES}
 )
 
 add_executable(srrg_open_file_example_app srrg_open_file_example_app.cpp)
 target_link_libraries(srrg_open_file_example_app
   srrg_system_utils_library
   srrg_txt_io_library
+  ${Boost_LIBRARIES}
 )
 
 add_executable(srrg_kdtree_example srrg_kdtree_example.cpp)
 target_link_libraries(srrg_kdtree_example
   srrg_system_utils_library
+  ${Boost_LIBRARIES}
 )
