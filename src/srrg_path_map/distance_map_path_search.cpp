@@ -10,7 +10,7 @@ namespace srrg_core {
   }
 
 
-  bool DistanceMapPathSearch::compute() {
+  void DistanceMapPathSearch::init() {
     if (! _output_path_map)
       throw std::runtime_error("no output map selected");
     
@@ -29,10 +29,15 @@ namespace srrg_core {
     PathMap& output=*_output_path_map;
     output.resize(rows,cols);
     output.fill(_max_squared_distance, 1.0f);
-
-    
-    PathMapCellQueue q;//(rows*cols);
-    //q.reserve(rows*cols);
+    fillQueueFromImage();
+  }
+  
+  void DistanceMapPathSearch::fillQueueFromImage() {
+    PathMap& output=*_output_path_map;
+    int rows = output.rows();
+    int cols = output.cols();
+    _queue = PathMapCellQueue();
+    _max_index=0;
     for (int r=0; r<rows; ++r){
       const int* index_ptr=_indices_image->ptr<const int>(r);
       int* index_map_ptr=_indices_map.ptr<int>(r);
@@ -41,22 +46,60 @@ namespace srrg_core {
 	int idx = *index_ptr;
 	if (idx>-1){
 	  *index_map_ptr=idx;
+	  if (_max_index<idx)
+	    _max_index=idx;
 	  cell_ptr->parent = cell_ptr;
 	  cell_ptr->distance = 0;
-	  q.push(cell_ptr);
+	  _queue.push(cell_ptr);
 	}
       }
     }
+  }
+
+  void DistanceMapPathSearch::setPoints(const Vector2iVector& points, int start_index){
+    PathMap& output=*_output_path_map;
+    int rows = output.rows();
+    int cols = output.cols();
+    if (start_index!=-1)
+      _max_index=start_index;
+    
+    for (Eigen::Vector2i p: points) {
+      if (! output.inside(p.x(), p.y())) 
+	continue;
+      ++_max_index;
+      _indices_map.at<int>(p.x(), p.y()) = _max_index;
+      PathMapCell* cell_ptr= &output(p.x(),p.y());
+      cell_ptr->parent = cell_ptr;
+      cell_ptr->distance = 0;
+      _queue.push(cell_ptr);
+    }
+  }
+  
+  bool DistanceMapPathSearch::compute() {
+    if (! _output_path_map)
+      throw std::runtime_error("no output map selected");
+    
+    if (! _indices_image)
+      throw std::runtime_error("no indices_image selected");
+
+    if (_queue.empty()){
+      throw std::runtime_error("empty queue, did you call init()?");
+    }
+    
+    PathMap& output=*_output_path_map;
+    int rows = output.rows();
+    int cols = output.cols();
+
     _num_operations = 0;
-    size_t maxQSize = q.size();
+    size_t maxQSize = _queue.size();
     // cerr << "startq: "  << maxQSize << endl;
     //int currentDistance = 0;
 
-    while (! q.empty()){
-      PathMapCell* current = q.top();
+    while (! _queue.empty()){
+      PathMapCell* current = _queue.top();
       PathMapCell* parent = current->parent;
       int parent_index = _indices_map.at<int>(parent->r, parent->c);
-      q.pop();
+      _queue.pop();
 
       if (output.onBorder(current->r, current->c))
 	continue;
@@ -73,10 +116,10 @@ namespace srrg_core {
 	  children->parent = parent;
 	  _indices_map.at<int>(r,c) = parent_index;
 	  children->distance = d;
-	  q.push(children);
+	  _queue.push(children);
 	}
       }
-      maxQSize = maxQSize < q.size() ? q.size() : maxQSize;
+      maxQSize = maxQSize < _queue.size() ? _queue.size() : maxQSize;
     }
     //double t1 = getTime();
     //cerr << "# operations: " << operations << " maxQ: " << maxQSize << " time: " << t1-t0 << endl;

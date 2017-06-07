@@ -49,6 +49,7 @@ namespace srrg_core {
     dmap_calculator.setMaxDistance(int_max_distance);
     dmap_calculator.setIndicesImage(indices);
     dmap_calculator.setOutputPathMap(distance_map);
+    dmap_calculator.init();
     dmap_calculator.compute();
     distances=dmap_calculator.distanceImage() * resolution;
 

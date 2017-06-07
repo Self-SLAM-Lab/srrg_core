@@ -61,6 +61,7 @@ int main(int argc, char** argv){
   while (d_curr<d_max) {
     dmap_calculator.setMaxDistance(d_curr);
     double t_start=getTime();
+    dmap_calculator.init();
     dmap_calculator.compute();
     double t_end=getTime();
     
