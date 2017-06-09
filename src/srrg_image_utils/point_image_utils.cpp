@@ -60,9 +60,9 @@ namespace srrg_core {
     normal_image=cv::Vec3f(0.,0.,0.);
     float squared_max_distance=max_distance*max_distance;
     for (int r = row_gap; r < points_image.rows - row_gap; r++) {
-      const cv::Vec3f* up_row_ptr=points_image.ptr<const cv::Vec3f>(r-row_gap);
-      const cv::Vec3f* row_ptr=points_image.ptr<const cv::Vec3f>(r);
-      const cv::Vec3f* down_row_ptr=points_image.ptr<const cv::Vec3f>(r+row_gap);
+      const cv::Vec3f* up_row_ptr=points_image.ptr<const cv::Vec3f>(r-row_gap) + col_gap;
+      const cv::Vec3f* row_ptr=points_image.ptr<const cv::Vec3f>(r) + col_gap;
+      const cv::Vec3f* down_row_ptr=points_image.ptr<const cv::Vec3f>(r+row_gap) + col_gap;
       cv::Vec3f* dest_row_ptr=normal_image.ptr<cv::Vec3f>(r);
       for (int c = col_gap;
 	   c < points_image.cols - col_gap;
@@ -70,7 +70,7 @@ namespace srrg_core {
 	
 	*dest_row_ptr=cv::Vec3f(0.f, 0.f, 0.f);
 	
-	const cv::Vec3f& p = points_image.at<cv::Vec3f>(r,c);
+	const cv::Vec3f& p = *row_ptr;
 	// if z is null, skip; 
 	if (p[2]==0)
 	  continue;
