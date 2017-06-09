@@ -63,7 +63,7 @@ namespace srrg_core {
       const cv::Vec3f* up_row_ptr=points_image.ptr<const cv::Vec3f>(r-row_gap) + col_gap;
       const cv::Vec3f* row_ptr=points_image.ptr<const cv::Vec3f>(r) + col_gap;
       const cv::Vec3f* down_row_ptr=points_image.ptr<const cv::Vec3f>(r+row_gap) + col_gap;
-      cv::Vec3f* dest_row_ptr=normal_image.ptr<cv::Vec3f>(r);
+      cv::Vec3f* dest_row_ptr=normal_image.ptr<cv::Vec3f>(r) + col_gap;
       for (int c = col_gap;
 	   c < points_image.cols - col_gap;
 	     ++c, ++up_row_ptr, ++row_ptr, ++down_row_ptr, ++dest_row_ptr ) {
@@ -113,9 +113,9 @@ namespace srrg_core {
     Float3Image normal_integral;
     cv::integral(src, normal_integral, CV_32F);
     for (int r = start + window; r < rows - start - window; ++r ) {
-      const cv::Vec3f* up_row_ptr=normal_integral.ptr<const cv::Vec3f>(r-window);
-      const cv::Vec3f* down_row_ptr=normal_integral.ptr<const cv::Vec3f>(r+window);
-      cv::Vec3f* dest_row_ptr=dest.ptr<cv::Vec3f>(r);
+      const cv::Vec3f* up_row_ptr=normal_integral.ptr<const cv::Vec3f>(r-window)+window;
+      const cv::Vec3f* down_row_ptr=normal_integral.ptr<const cv::Vec3f>(r+window)+window;
+      cv::Vec3f* dest_row_ptr=dest.ptr<cv::Vec3f>(r)+window;
 
       for (int c = start + window; c < cols - start - window;
 	   ++c, ++down_row_ptr, ++up_row_ptr, ++dest_row_ptr) {
