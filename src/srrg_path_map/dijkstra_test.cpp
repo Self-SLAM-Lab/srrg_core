@@ -40,6 +40,8 @@ float resolution=0.05;
 int free_threshold=240;
 int occ_threshold=60;
 
+UnsignedCharImage gray_map;
+
 // converts a map into an int image
 // to each occuiped cell is assigned a unique value >=0
 // to each free cell is assigned -1
@@ -48,16 +50,53 @@ int occ_threshold=60;
 bool recompute_occupancy=true;
 bool recompute_distance=true;
 bool recompute_cost=true;
+bool recompute_obstacles=true;
+bool paint_brush=false;
+bool drawing=false;
+Vector2iVector obstacle_points;
+std::vector<unsigned char> previous_pixel_values;
 static void mouseEventHandler( int event, int x, int y, int flags, void* userdata) {
-  if (event==cv::EVENT_LBUTTONDOWN){
+  if (!paint_brush && event==cv::EVENT_LBUTTONDOWN){
     goals.push_back(Eigen::Vector2i(y,x));
     cerr << "Adding goal [" << goals.size() << " " << y << " " << x << "]" << endl;
   }
-  if (event==cv::EVENT_RBUTTONDOWN){
+  if (!paint_brush && event==cv::EVENT_RBUTTONDOWN){
     current_position = Eigen::Vector2i(y,x);
     cerr << "Adding pose [ " << y << " " << x << "]" << endl;
   }
+  if (paint_brush && event== cv::EVENT_LBUTTONDOWN){
+    cerr << "Starting to draw" << endl;
+    drawing = true;
+    previous_pixel_values.push_back(gray_map.at<unsigned char>(y,x));
+    gray_map.at<unsigned char>(y,x) = (unsigned char) 0;
+    obstacle_points.push_back(Eigen::Vector2i(y,x));
+  }
+  if (paint_brush && event==cv::EVENT_LBUTTONUP){
+    //This point is already included in MOUSEMOVE
+    drawing = false;
+    recompute_occupancy=true;
+    recompute_distance=true;
+    recompute_cost=true;
+  }
+  if (paint_brush && drawing && event==cv::EVENT_MOUSEMOVE){
+    //cerr << "Drawing" << x << " " << y << endl;
+    previous_pixel_values.push_back(gray_map.at<unsigned char>(y,x));
+    gray_map.at<unsigned char>(y,x) = (unsigned char) 0;
+    obstacle_points.push_back(Eigen::Vector2i(y,x));   
+  }
+}
 
+void reset(){
+  for (size_t i = 0; i<obstacle_points.size(); i++){
+    Eigen::Vector2i p = obstacle_points[i];
+    gray_map.at<unsigned char>(p.x(), p.y()) = (unsigned char) previous_pixel_values[i]; //TODO: previous value
+  }
+  recompute_occupancy=true;
+  recompute_distance=true;
+  recompute_cost=true; 
+
+  obstacle_points.clear();
+  previous_pixel_values.clear();
 }
 
 static void onOccupancyTrackbar(int, void*) {
@@ -125,7 +164,6 @@ int main(int argc, char** argv){
   
   cerr << "loading image from file: " << argv[1] << endl;
   cv::Mat grid_map= cv::imread(argv[1]);
-  UnsignedCharImage gray_map;
 
   cvtColor(grid_map, gray_map, CV_BGR2GRAY);
   cvNamedWindow("controls");
@@ -207,7 +245,16 @@ int main(int argc, char** argv){
       what_to_show=Distance; break;
     case 'c':
       what_to_show=Cost; break;
-    case 27: run=false; break;
+    case 'p': //Paint obstacles by dragging mouse
+      paint_brush = !paint_brush;
+      std::cerr << "Paint brush" << paint_brush << std::endl;
+      break;
+    case 'r': //Paint obstacles by dragging mouse
+      reset();
+      std::cerr << "Reset obstacles" << std::endl;
+      break;
+      
+    case 27: run=false; break; //ESC key
     }
   }
 }
