@@ -5,10 +5,38 @@
 
 #define _NAN_CHECK_
 
-namespace srrg_nicp {
+namespace srrg_core {
 
   using namespace std;
-  using namespace srrg_core;
+
+  
+  void growMaskImage(UnsignedCharImage& dest,
+		     const UnsignedCharImage& src,
+		     int region) {
+
+    int rows = src.rows;
+    int cols = src.cols;
+    
+    IntImage integral;
+    cv::integral(src, integral, CV_32S);
+    dest.create(rows, cols);
+    dest = 1;
+    for (int r = region; r < rows - region; ++r ) {
+      const int* up_row_ptr=integral.ptr<const int>(r-region)+region;
+      const int* down_row_ptr=integral.ptr<const int>(r+region)+region;
+      unsigned char* dest_row_ptr=dest.ptr<unsigned char>(r)+region;
+
+      for (int c = region; c < cols - region;
+	   ++c, ++down_row_ptr, ++up_row_ptr, ++dest_row_ptr) {
+	int m11=*(down_row_ptr+region);
+	int m00=*(up_row_ptr-region);
+	int m01=*(down_row_ptr-region);
+	int m10=*(up_row_ptr+region);
+	int n_sum=m11+m00-m01-m10;
+	*dest_row_ptr=(n_sum>0);
+      }
+    }
+  }
 
   void shrinkRawDepth(RawDepthImage& dest_buffer, const RawDepthImage& src_buffer, int k){
 
@@ -357,80 +385,6 @@ namespace srrg_nicp {
     }
   }
 
-
-    void computeSimpleNormals(Float3Image& normal_image,
-			      const Float3Image& points_image,
-			      int col_gap,
-			      int row_gap,
-			      float max_distance = 0.1) {
-
-    normal_image.create(points_image.rows, points_image.cols);
-    float squared_max_distance=max_distance*max_distance;
-    for (int r = row_gap; r < points_image.rows - row_gap; r++) {
-      const cv::Vec3f* up_row_ptr=points_image.ptr<const cv::Vec3f>(r-row_gap);
-      const cv::Vec3f* row_ptr=points_image.ptr<const cv::Vec3f>(r);
-      const cv::Vec3f* down_row_ptr=points_image.ptr<const cv::Vec3f>(r+row_gap);
-      cv::Vec3f* dest_row_ptr=normal_image.ptr<cv::Vec3f>(r);
-      for (int c = col_gap;
-	   c < points_image.cols - col_gap; +
-	     ++c, ++up_row_ptr, ++row_ptr, ++down_row_ptr, ++dest_row_ptr ) {
-	dest_row_ptr[c]=cv::Vec3f(0.f, 0.f, 0.f);
-	const cv::Vec3f& p = points_image.at<cv::Vec3f>(r,c);
-	// if z is null, skip; 
-	if (p[2]==0)
-	  continue;
-      
-	const cv::Vec3f& px00 = row_ptr[c-col_gap];
-	if (px00[2]==0)
-	  continue;
-      
-	const cv::Vec3f& px01 = row_ptr[c+col_gap];
-	if (px01[2]==0)
-	  continue;
-
-	const cv::Vec3f& py00 = up_row_ptr[c];
-	if (py00[2]==0)
-	  continue;
-
-	const cv::Vec3f& py01 = down_row_ptr[c];
-	if (py00[2]==0)
-	  continue;
-
-	cv::Vec3f dx = px01 - px00;
-	cv::Vec3f dy = py01 - py00;
-	if (dx.dot(dx) > squared_max_distance || 
-	    dy.dot(dy) > squared_max_distance) { continue; }
-
-	cv::Vec3f n = dy.cross(dx);
-	n = normalize(n);
-	if (n.dot(p) > 0) { n = -n; }
-	dest_row_ptr[c] = n;
-      }
-    }
-  }
-
-  void normalBlur(Float3Image& dest, const Float3Image& src, int window, int start) {
-
-    dest = Float3Image::zeros(src.size());
-    int rows = dest.rows;
-    int cols = dest.cols;
-    Float3Image normal_integral;
-    cv::integral(src, normal_integral, CV_32F);
-
-    for (int r = start + window; r < rows - start - window; r++) {
-      for (int c = start + window; c < cols - start - window; c++) {
-	cv::Vec3f m11=normal_integral.at<cv::Vec3f>(r+window, c+window);
-	cv::Vec3f m00=normal_integral.at<cv::Vec3f>(r-window, c-window);
-	cv::Vec3f m01=normal_integral.at<cv::Vec3f>(r-window, c+window);
-	cv::Vec3f m10=normal_integral.at<cv::Vec3f>(r+window, c-window);
-	cv::Vec3f n_sum=m11+m00-m01-m10;
-	if (n_sum.dot(n_sum)>0.2)
-	  dest.at<cv::Vec3f>(r, c)= normalize(n_sum);
-	else
-	  dest.at<cv::Vec3f>(r, c) = cv::Vec3f(0,0,0);
-      }
-    }
-  }
 
 #ifdef _DEBUG_MERGE_
 

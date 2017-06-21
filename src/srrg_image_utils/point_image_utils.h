@@ -21,6 +21,6 @@ namespace srrg_core {
 			    float max_distance);
 
 
-  void normalBlur(Float3Image& dest, const Float3Image& src, int window, int start);
+  void normalBlur(Float3Image& dest, const Float3Image& src, int window);
   
 }

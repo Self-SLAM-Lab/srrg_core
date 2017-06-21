@@ -4,7 +4,7 @@
 
 #include <srrg_types/cloud_3d.h>
 
-namespace srrg_nicp {
+namespace srrg_core {
 
   //! shrinks a depth image, by a shrink factor k
   //! k=2 means the resulting image is half size
@@ -38,6 +38,11 @@ namespace srrg_nicp {
 	     srrg_core::FloatImage& srcBuffer, srrg_core::IndexImage& srcIndices, srrg_core::Cloud3D& src,
 	     float normalThreshold = 1, float distanceThreshold = 0.2);
 
+
+  // uses integral image to grow in dest src by region
+  void growMaskImage(srrg_core::UnsignedCharImage& dest,
+		     const srrg_core::UnsignedCharImage& src,
+		     int region);
   
   void convert_32FC1_to_16UC1(cv::Mat& dest, const cv::Mat& src, float scale = 1000.0f);
   void convert_32FC1_to_16UC1(cv::Mat& dest, const cv::Mat& src, const cv::Mat& mask, float scale = 1000.0f);

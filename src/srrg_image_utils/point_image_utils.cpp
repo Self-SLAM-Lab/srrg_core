@@ -7,6 +7,7 @@ namespace srrg_core {
 				   const Eigen::Matrix3f& camera_matrix,
 				   const UnsignedCharImage& mask){
 
+    std::cerr << "pinhole_directions" << std::endl;
     int rows=directions.rows;
     int cols=directions.cols;
     const Eigen::Matrix3f inverse_camera_matrix=camera_matrix.inverse();
@@ -17,14 +18,17 @@ namespace srrg_core {
 	masked=mask.ptr<const unsigned char>(r);
       }
       for (int c=0; c<cols; ++c, ++direction){
-	if (!masked || *masked) {
+	*direction=cv::Vec3f(0.f,0.f,0.f);
+	bool keep_point=(!masked || *masked);
+	if (keep_point) {
 	  Eigen::Vector3f dir=inverse_camera_matrix*Eigen::Vector3f(c,r,1);
 	  *direction=cv::Vec3f(dir.x(), dir.y(), dir.z());
-	  masked++;
-	} else
-	  *direction=cv::Vec3f(0.f,0.f,0.f);
+	} 
+	if (masked) ++masked;
       }
     }
+    std::cerr << "pinhole_directions done" << std::endl;
+    
   }
   
   void computePointsImage(Float3Image& points_image,
@@ -104,20 +108,19 @@ namespace srrg_core {
     }
   }
 
-  void normalBlur(Float3Image& dest, const Float3Image& src, int window, int start) {
-
+  void normalBlur(Float3Image& dest, const Float3Image& src, int window) {
 
     dest = Float3Image::zeros(src.size());
     int rows = dest.rows;
     int cols = dest.cols;
     Float3Image normal_integral;
     cv::integral(src, normal_integral, CV_32F);
-    for (int r = start + window; r < rows - start - window; ++r ) {
+    for (int r = window; r < rows - window; ++r ) {
       const cv::Vec3f* up_row_ptr=normal_integral.ptr<const cv::Vec3f>(r-window)+window;
       const cv::Vec3f* down_row_ptr=normal_integral.ptr<const cv::Vec3f>(r+window)+window;
       cv::Vec3f* dest_row_ptr=dest.ptr<cv::Vec3f>(r)+window;
 
-      for (int c = start + window; c < cols - start - window;
+      for (int c = window; c < cols - window;
 	   ++c, ++down_row_ptr, ++up_row_ptr, ++dest_row_ptr) {
 	cv::Vec3f m11=*(down_row_ptr+window);
 	cv::Vec3f m00=*(up_row_ptr-window);
