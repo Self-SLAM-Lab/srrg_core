@@ -408,4 +408,21 @@ namespace srrg_core {
     }
     return vector_eigen;
   }
+
+  //ml std vector to Eigen converters
+  inline Eigen::Matrix<float, 3, 1> fromFloatVector3f(const FloatVector& float_vector_){
+    Eigen::Matrix<float, 3, 1> vector_eigen;
+    assert(float_vector_.size() == 3);
+    for (size_t i=0; i<3; i++)
+      vector_eigen[i] = float_vector_[i];
+    
+    return vector_eigen;
+  }
+  inline FloatVector toFloatVector3f(const Eigen::Matrix<float, 3, 1>& vector_eigen_){
+    FloatVector float_vector;
+    float_vector.resize(3);
+    for (size_t i=0; i<3; i++)
+      float_vector[i] = vector_eigen_[i];
+    return float_vector;
+  }
 }
