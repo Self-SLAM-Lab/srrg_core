@@ -82,7 +82,7 @@ namespace srrg_core {
   template <typename CellType_, typename AllocatorType_>
   void
   Vector2D<CellType_, AllocatorType_>::copy(const Vector2D& other) {
-    if (!other.data().size()){
+    if (!other._data.size()){
       clear();
       return;
     }
