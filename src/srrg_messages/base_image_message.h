@@ -21,7 +21,7 @@ namespace srrg_core {
 
 // TXTIO interface
     virtual const std::string& tag() const;
-    inline std::string binaryFilename() const {return  _binaryFilename();}
+    inline std::string binaryFilename(bool recompute=false) const {return  _binaryFilename(recompute);}
     virtual void fromStream(std::istream& is);
     virtual void toStream(std::ostream& os) const;
   protected:
@@ -29,7 +29,7 @@ namespace srrg_core {
     virtual void _fetch();
     virtual void _release();
     virtual void _writeBack();
-    virtual std::string _binaryFilename() const;
+    virtual std::string _binaryFilename(bool recompute=false) const;
     virtual std::string extension() const;
     float _depth_scale;
     mutable std::string _binary_filename;

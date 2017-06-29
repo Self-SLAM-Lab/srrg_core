@@ -32,8 +32,8 @@ namespace srrg_core {
     release();
   }
 
-  std::string BaseImageMessage::_binaryFilename() const {
-    if (! _binary_filename.length()) {
+  std::string BaseImageMessage::_binaryFilename(bool recompute) const {
+    if (recompute || ! _binary_filename.length()) {
       std::string fn  = _topic;
       std::replace( fn.begin(), fn.end(), '/', '.');
       if (fn[0]=='.')
@@ -104,7 +104,7 @@ namespace srrg_core {
       data.setFloat("depth_scale", _depth_scale);
     srrg_boss::ObjectData * blob_data=new srrg_boss::ObjectData();
     data.setField("image", blob_data);
-    _image_reference.setNameAttribute(_binaryFilename());
+    _image_reference.setNameAttribute(_binaryFilename(true));
     _image_reference.serialize(*blob_data,context);
     untaint();
   }
