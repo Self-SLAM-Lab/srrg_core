@@ -50,7 +50,7 @@ namespace srrg_core {
   }
 
 
-  std::string BaseMessage::_binaryFilename() const{
+  std::string BaseMessage::_binaryFilename(bool recompute) const{
     return "";
   }
 

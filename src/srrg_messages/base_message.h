@@ -23,7 +23,7 @@ namespace srrg_core {
     inline void setBinaryFilePrefix(const std::string& bup) const {_binary_file_prefix=bup;}
     std::string binaryFullFilename() const;
   protected:
-    virtual std::string _binaryFilename() const;
+    virtual std::string _binaryFilename(bool recompute=false) const;
     virtual void _fetch();
     virtual void _release();
     virtual void _writeBack();
