@@ -6,8 +6,6 @@ namespace srrg_core {
   void initializePinholeDirections(Float3Image& directions,
 				   const Eigen::Matrix3f& camera_matrix,
 				   const UnsignedCharImage& mask){
-
-    std::cerr << "pinhole_directions" << std::endl;
     int rows=directions.rows;
     int cols=directions.cols;
     const Eigen::Matrix3f inverse_camera_matrix=camera_matrix.inverse();
@@ -27,8 +25,6 @@ namespace srrg_core {
 	if (masked) ++masked;
       }
     }
-    std::cerr << "pinhole_directions done" << std::endl;
-    
   }
   
   void computePointsImage(Float3Image& points_image,
