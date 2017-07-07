@@ -2,10 +2,7 @@
 
 #include <iostream>
 
-#include <srrg_types/defs.h>
-#include <srrg_types/cloud_3d.h>
-
-#include <srrg_boss/blob.h>
+#include "cloud_3d.h"
 
 #include "image_data.h"
 

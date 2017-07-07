@@ -2,6 +2,7 @@
 
 namespace srrg_core{
 
+using namespace std;
 using namespace srrg_boss;
 
 TraversabilityMap::TraversabilityMap(){
@@ -11,7 +12,7 @@ TraversabilityMap::TraversabilityMap(){
     _negate = 0;
     _occupied_threshold = 0.65;
     _free_threshold = 0.196;
-    _default_value = 127;
+    _default_value = -1;
     _robot_climb_step = 0.1;
     _robot_height = 0.5;
 }
@@ -110,10 +111,10 @@ void TraversabilityMap::compute(Cloud3D *cloud_, const Eigen::Isometry3f &iso){
             if (idx==-1)
                 continue;
             if (idx<-1){
-                classified.at<unsigned char>(r,c)=255;
+                classified.at<unsigned char>(r,c)=0;
                 continue;
             }
-            classified.at<unsigned char>(r,c)=0;
+            classified.at<unsigned char>(r,c)=254;
         }
 
 
@@ -121,7 +122,7 @@ void TraversabilityMap::compute(Cloud3D *cloud_, const Eigen::Isometry3f &iso){
     for (int r=1; r<rows-1; r++)
         for (int c=1; c<cols-1; c++) {
             unsigned char & cell=classified.at<unsigned char>(r,c);
-            if (cell!=255)
+            if (cell!=254)
                 continue;
 
             // seek for the 8 neighbors and isolate spurious points
@@ -130,14 +131,17 @@ void TraversabilityMap::compute(Cloud3D *cloud_, const Eigen::Isometry3f &iso){
                 for (int cc=-1; cc<=1; cc++) {
                     if (rr==0 && cc==0)
                         continue;
-                    one_big |= classified.at<unsigned char>(r+rr,c+cc)==255;
+                    one_big |= classified.at<unsigned char>(r+rr,c+cc)==0;
                 }
             if (! one_big) {
-                cell=0;
+                cell=254;
             }
         }
 
-    classified.copyTo(image()->image());
+    ImageData* i = new ImageData;
+    i->setImage(classified);
+    _image_ref.set(i);
+
 }
 
 void TraversabilityMap::serialize(srrg_boss::ObjectData &data, srrg_boss::IdContext &context){
@@ -166,12 +170,12 @@ void TraversabilityMap::serialize(srrg_boss::ObjectData &data, srrg_boss::IdCont
 }
 
 void TraversabilityMap::deserialize(srrg_boss::ObjectData &data, srrg_boss::IdContext &context){
-
+ 
     _resolution = data.getFloat("resolution");
 
     _dimensions.fromBOSS(data,"dimensions");
 
-    _origin.toBOSS(data,"origin");
+    _origin.fromBOSS(data,"origin");
 
     _negate = data.getInt("negate");
 
@@ -181,12 +185,16 @@ void TraversabilityMap::deserialize(srrg_boss::ObjectData &data, srrg_boss::IdCo
 
     _default_value = data.getInt("default_value");
 
-    _robot_climb_step = data.getFloat("robot_clim_step");
+    _robot_climb_step = data.getFloat("robot_climb_step");
 
     _robot_height = data.getFloat("robot_height");
 
     ObjectData* imageBlobData = static_cast<ObjectData*>(data.getField("image"));
+    
     _image_ref.deserialize(*imageBlobData,context);
+
 }
+
+BOSS_REGISTER_CLASS(TraversabilityMap);
 
 }

@@ -10,6 +10,7 @@ namespace srrg_core {
     virtual const std::string& extension();
     const cv::Mat& image() const  {return _image;}
     cv::Mat& image() {return _image;}
+    void setImage(cv::Mat& image_){image_.copyTo(_image);}
     const std::string& const_extension() const;
   protected:
     cv::Mat _image;
