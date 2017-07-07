@@ -6,13 +6,13 @@ using namespace std;
 using namespace srrg_boss;
 
 TraversabilityMap::TraversabilityMap(){
-    _resolution = 0.05;
+    _resolution = 0.01;
     _dimensions = Eigen::Vector3i::Zero();
     _origin = Eigen::Vector3f::Zero();
     _negate = 0;
     _occupied_threshold = 0.65;
     _free_threshold = 0.196;
-    _default_value = -1;
+    _default_value = 127;
     _robot_climb_step = 0.1;
     _robot_height = 0.5;
 }
