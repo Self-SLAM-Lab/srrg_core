@@ -6,8 +6,6 @@ namespace srrg_core {
   void initializePinholeDirections(Float3Image& directions,
 				   const Eigen::Matrix3f& camera_matrix,
 				   const UnsignedCharImage& mask){
-
-    std::cerr << "pinhole_directions" << std::endl;
     int rows=directions.rows;
     int cols=directions.cols;
     const Eigen::Matrix3f inverse_camera_matrix=camera_matrix.inverse();
@@ -27,8 +25,37 @@ namespace srrg_core {
 	if (masked) ++masked;
       }
     }
-    std::cerr << "pinhole_directions done" << std::endl;
-    
+  }
+
+  void initializeSphericalDirections(Float3Image& directions,
+				     const Eigen::Matrix3f& camera_matrix,
+				     const UnsignedCharImage& mask){
+    int rows=directions.rows;
+    int cols=directions.cols;
+    const Eigen::Matrix3f inverse_camera_matrix=camera_matrix.inverse();
+
+    for (int r=0; r<rows; ++r) {
+      cv::Vec3f* direction=directions.ptr<cv::Vec3f>(r);
+      const unsigned char* masked=0;
+      if (! mask.empty()) {
+	masked=mask.ptr<const unsigned char>(r);
+      }
+      for (int c=0; c<cols; ++c, ++direction){
+	*direction=cv::Vec3f(0.f,0.f,0.f);
+	bool keep_point=(!masked || *masked);
+	if (keep_point) {
+	  Eigen::Vector3f azimuth_elevation=inverse_camera_matrix*Eigen::Vector3f(c,r,1);
+	  const float& azimuth=azimuth_elevation[0];
+	  const float& elevation=azimuth_elevation[1];
+	  
+	  Eigen::Matrix3f R=
+	    Eigen::AngleAxisf(azimuth, Eigen::Vector3f::UnitZ()).toRotationMatrix()*
+	    Eigen::AngleAxisf(elevation, Eigen::Vector3f::UnitY()).toRotationMatrix();
+	  *direction=cv::Vec3f(R(0,0), R(1,0), R(2,0));
+	} 
+	if (masked) ++masked;
+      }
+    }
   }
   
   void computePointsImage(Float3Image& points_image,

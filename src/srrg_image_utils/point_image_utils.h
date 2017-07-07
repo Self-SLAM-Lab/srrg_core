@@ -7,6 +7,9 @@ namespace srrg_core {
 				   const Eigen::Matrix3f& camera_matrix,
 				   const UnsignedCharImage& mask=UnsignedCharImage());
 
+  void initializeSphericalDirections(Float3Image& directions,
+				     const Eigen::Matrix3f& camera_matrix,
+				     const UnsignedCharImage& mask=UnsignedCharImage());
   
   void computePointsImage(Float3Image& point_image,
 			  const Float3Image& direction_image,
