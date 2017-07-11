@@ -58,6 +58,49 @@ namespace srrg_core {
     }
   }
   
+
+  void initializeSphericalDirections(Float3Image& directions,
+                                     const Eigen::Vector4f& spherical_camera_matrix,
+                                     const UnsignedCharImage& mask) {
+    int rows=directions.rows;
+    int cols=directions.cols;
+
+    const float& horizontal_fov=spherical_camera_matrix(0);
+    const float& vertical_fov=spherical_camera_matrix(1);
+    const float& horizontal_res=spherical_camera_matrix(2);
+    const float horizontal_ires=1./horizontal_res;
+    const float& vertical_res=spherical_camera_matrix(3);
+    const float vertical_ires=1./vertical_res;
+
+    for(int r=0; r<rows; ++r){
+        cv::Vec3f* direction=directions.ptr<cv::Vec3f>(r);
+
+        float rho=(r-rows/2)*vertical_ires;
+        if (fabs(rho)>.5*vertical_fov)
+          continue; //this is bad
+        float s_rho=sin(rho);
+        float c_rho=cos(rho);
+
+        const unsigned char *masked=0;
+        if(!mask.empty()) {
+            masked=mask.ptr<const unsigned char>(r);
+        }
+        for(int c=0; c < cols; ++c, ++direction) {
+            *direction=cv::Vec3f(0.f,0.f,0.f);
+            bool keep_point=(!masked || *masked);
+            if (keep_point) {
+                float theta=(c-cols/2)*horizontal_ires;
+                if(fabs(theta)<.5*horizontal_fov) {
+                    *direction = cv::Vec3f(c_rho*cos(theta), c_rho*sin(theta), s_rho);
+                }
+            }
+            if (masked) ++masked;
+        }
+    }
+  }
+
+
+
   void computePointsImage(Float3Image& points_image,
 			  const Float3Image& directions,
 			  const FloatImage&  depth_image,
