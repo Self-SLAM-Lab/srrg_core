@@ -57,6 +57,9 @@ namespace srrg_core {
   //!a 6   float vector
   typedef Eigen::Matrix<float, 6, 1> Vector6f;
   
+  //!a 7   float vector
+  typedef Eigen::Matrix<float, 7, 1> Vector7f;
+
   //!a 9x6 float matrix 
   typedef Eigen::Matrix<float, 9, 6> Matrix9_6f;
 
@@ -141,6 +144,21 @@ namespace srrg_core {
     return v;
   }
 
+  //!converts from isometry to 7 vector                                                                   
+  //!@param t: an isometry
+  //!@returns a vector (tx, ty, tz, qx, qy, qz, qw) reptesenting the transform.
+  //!be aware! the output quaternion is not normalized
+  inline Vector7f t2w(const Eigen::Isometry3f& t){
+    Vector7f v;
+    v.head<3>()=t.translation();
+    Eigen::Quaternionf q(t.linear());
+    v(3) = q.x();
+    v(4) = q.y();
+    v(5) = q.z();
+    v(6) = q.w();
+    return v;
+  }
+  
   //!converts from isometry2f to isometry3f                                                                   
   //!@param t: an isometry2f
   //!@returns an isometry3f
