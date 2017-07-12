@@ -9,7 +9,7 @@ namespace srrg_core {
   //! shrinks a depth image, by a shrink factor k
   //! k=2 means the resulting image is half size
   //! k must be a perfect divider of the input
-  //! in dest the region shrunk is interpolated
+  //! in dest the region shrunk is not interpolated
   void shrinkRawDepth(srrg_core::RawDepthImage& dest_buffer, const srrg_core::RawDepthImage& src_buffer, int shrink_factor);
 
   //! shrinks a depth image, ad the indices by a shrink factor k

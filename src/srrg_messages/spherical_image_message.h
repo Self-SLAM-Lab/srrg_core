@@ -24,7 +24,7 @@ namespace srrg_core {
     //! v_1=vertical_fov (radians)
     //! v_2=horizontal_resolution (pixel/radians)
     //! v_3=vertical_resolution (pixel/radians)
- 
+    
     inline const Eigen::Vector4f& cameraMatrix() const {return _camera_matrix; }
     inline void setCameraMatrix(const Eigen::Vector4f& camera_matrix) {_camera_matrix = camera_matrix;}
   protected:
