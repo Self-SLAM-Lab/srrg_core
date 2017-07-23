@@ -25,10 +25,13 @@ FloatImage distance_image;
 // cost_map. recomputed when max cost/ min cost or robot radius are touched or distance_image recomputed
 FloatImage cost_image; // image of the costmap
 
+FloatImage voronoi_image;
+
 // likelihood field, recomputed when parameters are changed
 PathMap path_map; // path field
+PathMap distance_map; // distance path map field
 
-enum WhatToShow {Map, Distance, Cost};
+enum WhatToShow {Map, Distance, Cost, Voronoi};
 WhatToShow what_to_show = Map;
 
 float max_cost=100;
@@ -39,6 +42,7 @@ float safety_region=1.0f;
 float resolution=0.05;
 int free_threshold=240;
 int occ_threshold=60;
+float voronoi_incidence_threshold = 0.5;
 
 UnsignedCharImage gray_map;
 
@@ -114,6 +118,45 @@ static void onCostTrackbar(int, void*) {
   recompute_cost=true;
 }
 
+void computeVoronoi() {
+  int rows = distance_map.rows();
+  int cols = distance_map.cols();
+  
+  voronoi_image.create(rows, cols);
+  voronoi_image = 0;
+  float max_val=0;
+
+  
+  for (int r= 1; r<rows-1; ++r) {
+    for (int c= 1; c<cols-1; ++c){
+      PathMapCell* current= &distance_map(r,c);
+      // a voronoi cell is a cell whose neighbors have different parents
+
+      if (current->parent==nullptr)
+	continue;
+      Eigen::Vector2f dp(r-current->parent->r,
+			 c-current->parent->c);
+      dp.normalize();
+      
+      for (int i=0; i<8; i++){
+	PathMapCell* child=  current+distance_map.eightNeighborOffsets()[i];
+	if (child->parent == nullptr)
+	  break;
+	if (child->parent!=current->parent){
+	  // we compute the incidence between the two parents)
+	  Eigen::Vector2f dc(child->r-child->parent->r,
+			     child->c-child->parent->c);
+	  dc.normalize();
+	  float delta= dp.dot(dc);
+	  if ( delta < voronoi_incidence_threshold)
+	    voronoi_image.at<float>(r,c)=1;
+	}
+      }
+    }
+  }
+}
+
+
 void showStuff() {
   switch(what_to_show) {
   case Map:
@@ -134,11 +177,13 @@ void showStuff() {
   case Distance:
     shown_image=distance_image*(1./safety_region);
     break;
-    
+  case Voronoi:
+    cerr << "showing voronoi" << endl; 
+    shown_image=voronoi_image;
+    break;
   case Cost:
     shown_image=cost_image*(1.f/max_cost);
     break;
-
   }
 
   for (const Eigen::Vector2i& goal:goals) {
@@ -204,6 +249,8 @@ int main(int argc, char** argv){
       safety_region= 1e-3*safety_region_in_mm;
       resolution=1e-3*resolution_in_mm;
       indices2distances(distance_image, indices_image, resolution, safety_region);
+      indices2distancePathMap(distance_map, indices_image, resolution, safety_region);
+      computeVoronoi();
       recompute_distance=false;
     }
     if (recompute_cost) {
@@ -243,6 +290,9 @@ int main(int argc, char** argv){
       what_to_show=Map; break;
     case 'd':
       what_to_show=Distance; break;
+    case 'v':
+      cerr << "Voronoi selected" << endl;
+      what_to_show=Voronoi; break;
     case 'c':
       what_to_show=Cost; break;
     case 'p': //Paint obstacles by dragging mouse

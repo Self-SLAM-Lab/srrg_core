@@ -8,6 +8,11 @@ namespace srrg_core{
 		       unsigned char occ_threshold,
 		       unsigned char free_threshold);
 
+  void indices2distancePathMap(PathMap& distance_map,
+			       const IntImage& indices,
+			       float resolution,
+			       float max_distance);
+
   void indices2distances(FloatImage& distances,
 			 const IntImage& indices,
 			 float resolution,

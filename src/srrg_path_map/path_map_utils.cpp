@@ -38,11 +38,24 @@ namespace srrg_core {
     */
   }
 
+  void indices2distancePathMap(PathMap& distance_map,
+			       const IntImage& indices,
+			       float resolution,
+			       float max_distance) {
+
+    unsigned int int_max_distance  = max_distance/resolution;
+    DistanceMapPathSearch dmap_calculator;
+    dmap_calculator.setMaxDistance(int_max_distance);
+    dmap_calculator.setIndicesImage(indices);
+    dmap_calculator.setOutputPathMap(distance_map);
+    dmap_calculator.init();
+    dmap_calculator.compute();
+  }
+
   void indices2distances(FloatImage& distances,
 			 const IntImage& indices,
 			 float resolution,
 			 float max_distance) {
-
     unsigned int int_max_distance  = max_distance/resolution;
     DistanceMapPathSearch dmap_calculator;
     PathMap distance_map;
@@ -52,8 +65,8 @@ namespace srrg_core {
     dmap_calculator.init();
     dmap_calculator.compute();
     distances=dmap_calculator.distanceImage() * resolution;
-
   }
+
 
 
   void distances2cost(FloatImage& dest,
