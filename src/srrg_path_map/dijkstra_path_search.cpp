@@ -62,19 +62,19 @@ namespace srrg_core {
 	continue;
       
       for (int i=0; i<8; i++){
-	PathMapCell* children=  current+output.eightNeighborOffsets()[i];
-	if (children->cost>_max_cost)
+	PathMapCell* child=  current+output.eightNeighborOffsets()[i];
+	if (child->cost>_max_cost)
 	  continue;
 	
-	int dr = children->r - current->r;
-	int dc = children->c - current->c;
+	int dr = child->r - current->r;
+	int dc = child->c - current->c;
 	float step_cost=(dr==0||dc==0) ? _cell_traversal_cost : _cell_traversal_cost_diagonal;
-	step_cost*=children->cost;
+	step_cost*=child->cost;
 	float estimated_distance=step_cost+current->distance;
-	if (children->distance>estimated_distance) {
-	  children->parent = current;
-	  children->distance = estimated_distance;
-	  q.push(children);
+	if (child->distance>estimated_distance) {
+	  child->parent = current;
+	  child->distance = estimated_distance;
+	  q.push(child);
 	}
 	_num_operations++;
       }

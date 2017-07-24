@@ -104,19 +104,19 @@ namespace srrg_core {
       if (output.onBorder(current->r, current->c))
 	continue;
       for (int i=0; i<8; i++){
-	PathMapCell* children=  current+output.eightNeighborOffsets()[i];
-	int r = children->r;
-	int c = children->c;
+	PathMapCell* child=  current+output.eightNeighborOffsets()[i];
+	int r = child->r;
+	int c = child->c;
 	int dr = r-parent->r;
 	int dc = c-parent->c;
 	int d=(dr*dr+dc*dc);
 	// // cerr << "children: " << children->r << " "  << children->c << " " << children->distance <<  " " << d << endl;
 	_num_operations++;
-	if (d<_max_squared_distance && children->distance>d) {
-	  children->parent = parent;
+	if (d<_max_squared_distance && child->distance>d) {
+	  child->parent = parent;
 	  _indices_map.at<int>(r,c) = parent_index;
-	  children->distance = d;
-	  _queue.push(children);
+	  child->distance = d;
+	  _queue.push(child);
 	}
       }
       maxQSize = maxQSize < _queue.size() ? _queue.size() : maxQSize;

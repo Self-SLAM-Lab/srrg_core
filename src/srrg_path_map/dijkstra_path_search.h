@@ -33,8 +33,6 @@ namespace srrg_core {
     float _cell_traversal_cost, _cell_traversal_cost_diagonal; // 
     const FloatImage* _cost_map;
     Vector2iVector _goals;
-    IntImage _indices_map;
-    FloatImage _distance_image;
   };
 
 }
