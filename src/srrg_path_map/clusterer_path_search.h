@@ -7,8 +7,8 @@ namespace srrg_core {
   public:
     struct Cluster{
       PathMapCell* cell;
-      int mean_r;
-      int mean_c;
+      float mean_r;
+      float mean_c;
       int point_count;
     };
     typedef std::vector<Cluster> ClusterVector;

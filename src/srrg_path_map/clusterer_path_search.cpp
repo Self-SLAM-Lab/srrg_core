@@ -75,7 +75,7 @@ namespace srrg_core {
 	  continue;
 	child->parent=cell;
 	r_sum+=child->r;
-	r_sum+=child->c;
+	c_sum+=child->c;
 	++count;
 	_num_operations++;
 	queue.push_back(child);
