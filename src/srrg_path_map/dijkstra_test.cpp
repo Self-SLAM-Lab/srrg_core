@@ -59,6 +59,7 @@ bool paint_brush=false;
 bool drawing=false;
 Vector2iVector obstacle_points;
 std::vector<unsigned char> previous_pixel_values;
+
 static void mouseEventHandler( int event, int x, int y, int flags, void* userdata) {
   if (!paint_brush && event==cv::EVENT_LBUTTONDOWN){
     goals.push_back(Eigen::Vector2i(y,x));

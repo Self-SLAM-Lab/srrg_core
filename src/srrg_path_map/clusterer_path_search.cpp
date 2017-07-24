@@ -49,6 +49,7 @@ namespace srrg_core {
   }
 
   void ClustererPathSearch::expandRegion(PathMapCell* cell) {
+    cerr << __PRETTY_FUNCTION__ << ": r=" <<cell->r << " " << "c=" << cell->c << endl;
     PathMap& output=*_output_path_map;
     int rows = output.rows();
     int cols = output.cols();
@@ -80,14 +81,14 @@ namespace srrg_core {
 	_num_operations++;
 	queue.push_back(child);
       }
-      Cluster cluster;
-      cluster.cell=cell;
-      cluster.mean_r=(float)r_sum/(float) count;
-      cluster.mean_c=(float)c_sum/(float) count;
-      cluster.point_count=count;
-      _clusters.push_back(cluster);
-      ++_max_index;
     }
+    Cluster cluster;
+    cluster.cell=cell;
+    cluster.mean_r=(float)r_sum/(float) count;
+    cluster.mean_c=(float)c_sum/(float) count;
+    cluster.point_count=count;
+    _clusters.push_back(cluster);
+    ++_max_index;
   }
 
   
@@ -102,7 +103,7 @@ namespace srrg_core {
       for (int c=0; c<cols; ++c, ++cell_ptr){
 	if (cell_ptr->cost==std::numeric_limits<float>::max())
 	  continue;
-	if (!cell_ptr->parent)
+	if (cell_ptr->parent)
 	  continue;
 	expandRegion(cell_ptr);
       }

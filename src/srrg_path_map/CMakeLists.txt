@@ -26,3 +26,11 @@ target_link_libraries(dijkstra_test
   srrg_system_utils_library
   ${OPENCV_LIBS}
   )
+
+add_executable(clusterer_test clusterer_test.cpp)
+
+target_link_libraries(clusterer_test
+  srrg_path_map_library
+  srrg_system_utils_library
+  ${OPENCV_LIBS}
+  )
