@@ -1,6 +1,7 @@
 #include "path_map.h"
 #include "dijkstra_path_search.h"
 #include "distance_map_path_search.h"
+#include "clusterer_path_search.h"
 
 namespace srrg_core {
 
@@ -187,70 +188,31 @@ void distance2peaks(FloatImage& dest,
 
 }
 
-typedef std::vector<Vector2iVector> ClusterVector;
-
-void peaks2clusters(ClusterVector& clusters,
-                    const FloatImage &src,
-                    float threshold,
-                    int radius){
-
-    Vector2iVector points;
-
-    int rows=src.rows;
-    int cols=src.cols;
-
-    for(int r=0; r<rows; ++r){
-        const float* src_ptr=src.ptr<const float>(r);
-        for(int c=0; c<cols; ++c, ++src_ptr){
-            float v=*src_ptr;
-            if(v > threshold)
-                points.push_back(Eigen::Vector2i (r,c));
-        }
+  void peaks2clusters(ClustererPathSearch::ClusterVector& clusters,
+		      const FloatImage &src){
+  int rows=src.rows;
+  int cols=src.cols;
+  IntImage regions;
+  regions.create(rows, cols);
+  for (int r=0;r<rows; ++r) {
+    int* regions_ptr=regions.ptr<int>(r);
+    const float* src_ptr=src.ptr<const float>(r);
+    for (int c=0;c<cols; ++c, ++src_ptr, ++ regions_ptr){
+      *regions_ptr = (*src_ptr==0) ? -1 : 0;
     }
+  }
+  ClustererPathSearch clusterer;
+  PathMap  output_map;
+  clusterer.setOutputPathMap(output_map);
+  clusterer.setRegionsImage(regions);
+  cerr << "init" << endl;
+  clusterer.init();
+  cerr << "compute" << endl;
+  clusterer.compute();
+  cerr << "done" << endl;
+  clusters = clusterer.clusters();
+  cerr << "found " << clusters.size() << " clusters" << endl;
 
-    vector<bool> processed (points.size(),false);
-
-    for(int i=0; i<points.size(); i++){
-        if(processed[i])
-            continue;
-
-        vector<int> seed_queue;
-        int sq_idx = 0;
-        seed_queue.push_back(i);
-
-        processed[i] = true;
-
-        while(sq_idx < seed_queue.size()){
-            vector<int> neighbors;
-
-            for(int j=0; j<points.size(); j++){
-                if(j == i)
-                    continue;
-
-                if((points[i] - points[j]).squaredNorm() <= radius)
-                    neighbors.push_back(j);
-            }
-
-            if(neighbors.size() == 0){
-                sq_idx++;
-                continue;
-            }
-
-            for(int j=0; j<neighbors.size(); j++){
-                if(processed[neighbors[j]])
-                    continue;
-                seed_queue.push_back(neighbors[j]);
-                processed[neighbors[j]] = true;
-            }
-            sq_idx++;
-        }
-
-        Vector2iVector cluster;
-        for(int j=0; j < seed_queue.size(); j++){
-            cluster.push_back(points[seed_queue[j]]);
-        }
-        clusters.push_back(cluster);
-    }
 }
 
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "path_map.h"
+#include "clusterer_path_search.h"
 
 namespace srrg_core{
   
@@ -36,11 +37,7 @@ namespace srrg_core{
                       int element_type,
                       int element_size);
 
-  typedef std::vector<Vector2iVector> ClusterVector;
-
-  void peaks2clusters(ClusterVector& clusters,
-                      const FloatImage& src,
-                      float threshold,
-                      int radius);
+  void peaks2clusters(ClustererPathSearch::ClusterVector& clusters,
+                      const FloatImage& src);
 
 }

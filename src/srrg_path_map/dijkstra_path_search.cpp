@@ -54,6 +54,7 @@ bool DijkstraPathSearch::compute(){
 
     _num_operations=0;
     size_t max_q_size=q.size();
+    float current_distance=0;
     // pull and expand
     while (! q.empty()){
         PathMapCell* current = q.top();
@@ -62,19 +63,30 @@ bool DijkstraPathSearch::compute(){
             continue;
 
         for (int i=0; i<8; i++){
-            PathMapCell* children=  current+output.eightNeighborOffsets()[i];
-            if (children->cost>_max_cost)
+            PathMapCell* child=  current+output.eightNeighborOffsets()[i];
+            if (child->cost>_max_cost)
                 continue;
+            if (child->distance<current_distance)
+                continue;
+            current_distance=child->distance;
 
-            int dr = children->r - current->r;
-            int dc = children->c - current->c;
+            int dr = child->r - current->r;
+            int dc = child->c - current->c;
             float step_cost=(dr==0||dc==0) ? _cell_traversal_cost : _cell_traversal_cost_diagonal;
-            step_cost*=children->cost;
+            float this_cost;
+            float cost_difference=current->cost-child->cost;
+
+            if(cost_difference<0)
+                this_cost=child->cost*fabs(cost_difference);
+            else
+                this_cost=child->cost/cost_difference;
+
+            step_cost*=this_cost;
             float estimated_distance=step_cost+current->distance;
-            if (children->distance>estimated_distance) {
-                children->parent = current;
-                children->distance = estimated_distance;
-                q.push(children);
+            if (child->distance>estimated_distance) {
+                child->parent = current;
+                child->distance = estimated_distance;
+                q.push(child);
             }
             _num_operations++;
         }
