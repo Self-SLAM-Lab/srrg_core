@@ -70,7 +70,7 @@ bool DijkstraPathSearch::compute(){
 
         for (int i=0; i<8; i++){
             PathMapCell* child=  current+output.eightNeighborOffsets()[i];
-            if (child->cost>_max_cost)
+            if (child->cost>_cost_max)
                 continue;
             if (child->distance<current_distance)
                 continue;
