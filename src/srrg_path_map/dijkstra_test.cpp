@@ -8,8 +8,8 @@ using namespace std;
 
 using namespace srrg_core;
 
-Vector2iVector goals;
-Eigen::Vector2i current_position;
+Vector2iVector origins;
+Eigen::Vector2i goal;
 FloatImage shown_image;
 DijkstraPathSearch path_calculator;
 
@@ -62,11 +62,11 @@ std::vector<unsigned char> previous_pixel_values;
 
 static void mouseEventHandler( int event, int x, int y, int flags, void* userdata) {
   if (!paint_brush && event==cv::EVENT_LBUTTONDOWN){
-    goals.push_back(Eigen::Vector2i(y,x));
-    cerr << "Adding goal [" << goals.size() << " " << y << " " << x << "]" << endl;
+    origins.push_back(Eigen::Vector2i(y,x));
+    cerr << "Adding goal [" << origins.size() << " " << y << " " << x << "]" << endl;
   }
   if (!paint_brush && event==cv::EVENT_RBUTTONDOWN){
-    current_position = Eigen::Vector2i(y,x);
+    goal = Eigen::Vector2i(y,x);
     cerr << "Adding pose [ " << y << " " << x << "]" << endl;
   }
   if (paint_brush && event== cv::EVENT_LBUTTONDOWN){
@@ -157,6 +157,25 @@ void computeVoronoi() {
   }
 }
 
+void showPaths() {
+  if(goal.x()<0)
+    return;
+  cv::circle(shown_image, cv::Point(goal.y(), goal.x()), 3, cv::Scalar(100.0f), 3.0f);
+
+  for (const Eigen::Vector2i& origin:origins) {
+    cv::circle(shown_image, cv::Point(origin.y(), origin.x()), 3, cv::Scalar(100.0f)); 
+    PathMapCell* current=&path_map(origin.x(), origin.y());
+    while (current&& current->parent && current->parent!=current) {
+      PathMapCell* parent=current->parent;
+      cv::line(shown_image,
+	       cv::Point(current->c, current->r),
+	       cv::Point(parent->c, parent->r),
+	       cv::Scalar(0.0f));
+      current = current->parent;
+    }
+  }
+}
+
 
 void showStuff() {
   switch(what_to_show) {
@@ -186,25 +205,10 @@ void showStuff() {
     shown_image=cost_image*(1.f/max_cost);
     break;
   }
-
-  for (const Eigen::Vector2i& goal:goals) {
-    cv::circle(shown_image, cv::Point(goal.y(), goal.x()), 3, cv::Scalar(100.0f)); 
-  }
-  cv::circle(shown_image, cv::Point(current_position.y(), current_position.x()), 3, cv::Scalar(100.0f), 3.0f);
-  if (current_position.x()>=0 && goals.size()){
-    PathMapCell* current=&path_map(current_position.x(), current_position.y());
-    while (current&& current->parent && current->parent!=current) {
-      PathMapCell* parent=current->parent;
-      cv::line(shown_image,
-	       cv::Point(current->c, current->r),
-	       cv::Point(parent->c, parent->r),
-	       cv::Scalar(0.0f));
-      current = current->parent;
-    }
-  }
-
+  showPaths();
   cv::imshow("path", shown_image);
 }
+
 
 int main(int argc, char** argv){
   
@@ -220,10 +224,16 @@ int main(int argc, char** argv){
   
   cvNamedWindow("path");
   int max_cost_int=max_cost;
-  cv::createTrackbar("max_cost", "controls", &max_cost_int, 1000, onCostTrackbar);
+  cv::createTrackbar("max_cost", "controls", &max_cost_int, 10000, onCostTrackbar);
 
   int min_cost_int=min_cost;
-  cv::createTrackbar("min_cost", "controls", &min_cost_int, 1000, onCostTrackbar);
+  cv::createTrackbar("min_cost", "controls", &min_cost_int, 10000, onCostTrackbar);
+
+  int cost_proportional_factor_int=1;
+  cv::createTrackbar("cost_proportional/10", "controls", &cost_proportional_factor_int, 1000, onCostTrackbar);
+
+  int cost_differential_factor_int=0;
+  cv::createTrackbar("cost_differentual/10", "controls", &cost_differential_factor_int, 1000, onCostTrackbar);
 
   int safety_region_in_mm=safety_region*1000;
   cv::createTrackbar("safety_region_in_mm", "controls", &safety_region_in_mm, 3000, onDistanceTrackbar);
@@ -237,8 +247,8 @@ int main(int argc, char** argv){
   shown_image.create(gray_map.rows, gray_map.cols);
   
   bool run=true;
-  current_position.x()=-1;
-  current_position.y()=-1;
+  goal.x()=-1;
+  goal.y()=-1;
   
   while(run) {
 
@@ -268,12 +278,15 @@ int main(int argc, char** argv){
       recompute_cost=false;
     }
     
-    path_calculator.setMaxCost(max_cost-1);
+    path_calculator.setCostMax(max_cost-1);
     path_calculator.setCostMap(cost_image);
     path_calculator.setOutputPathMap(path_map);
-    if (! goals.empty() && current_position.x()>=0){
+    path_calculator.setCostFactorProportional(cost_proportional_factor_int/10.f);
+    path_calculator.setCostFactorDifferential(cost_differential_factor_int/10.f);
+    if (! origins.empty() && goal.x()>=0){
       double t_start=getTime();
-      path_calculator.goals()=goals;
+      path_calculator.goals().clear();
+      path_calculator.goals().push_back(goal);
       path_calculator.compute();
       double t_end=getTime();
       cerr << "time: " << t_end - t_start << " " << path_calculator.numOperations() << endl;
@@ -283,9 +296,9 @@ int main(int argc, char** argv){
     unsigned char key=cv::waitKey(10);
     switch(key){
     case 'x':
-      goals.clear();
-      current_position.x()=-1;
-      current_position.y()=-1;
+      origins.clear();
+      goal.x()=-1;
+      goal.y()=-1;
       break;
     case 'm':
       what_to_show=Map; break;

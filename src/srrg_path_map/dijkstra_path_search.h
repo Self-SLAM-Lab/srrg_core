@@ -8,11 +8,12 @@ namespace srrg_core {
     DijkstraPathSearch();
     
     //! 
-    inline float maxCost() const {return _max_cost;}
+    inline float costMax() const {return _cost_max;}
+    inline void setCostMax(float cost_max_) { _cost_max=cost_max_; }
 
-    inline void setMaxCost(float max_cost_) {
-      _max_cost=max_cost_;
-    }
+    inline void setCostFactorProportional(float cost) {_cost_factor_proportional=cost;}
+    inline void setCostFactorDifferential(float cost) {_cost_factor_differential=cost;}
+    
 
     inline float cellTraversalCost() const { return _cell_traversal_cost; }
 
@@ -29,7 +30,9 @@ namespace srrg_core {
     virtual bool compute() override;
 
   protected:
-    float _max_cost; // in pixels, maximum cost for a cell(used to avoid obstacles)
+    float _cost_max; // in pixels, maximum cost for a cell(used to avoid obstacles)
+    float _cost_factor_proportional;
+    float _cost_factor_differential;
     float _cell_traversal_cost, _cell_traversal_cost_diagonal; // 
     const FloatImage* _cost_map;
     Vector2iVector _goals;
