@@ -6,7 +6,9 @@ namespace srrg_core {
 DijkstraPathSearch::DijkstraPathSearch() {
     _cost_map=0;
     setCellTraversalCost(1.0f);
-    setMaxCost(100);
+    setCostMax(100);
+    _cost_factor_proportional=1;
+    _cost_factor_differential=0;
 }
 
 bool DijkstraPathSearch::compute(){
@@ -43,7 +45,7 @@ bool DijkstraPathSearch::compute(){
         if (!output.inside(r,c)){
             return false;
         }
-        if (_cost_map->at<float>(r,c) > _max_cost){
+        if (_cost_map->at<float>(r,c) > _cost_max){
             return false;
         }
         PathMapCell& goal_cell=output(r,c);
@@ -56,9 +58,13 @@ bool DijkstraPathSearch::compute(){
     size_t max_q_size=q.size();
     float current_distance=0;
     // pull and expand
+    float d_min=0;
     while (! q.empty()){
         PathMapCell* current = q.top();
         q.pop();
+	if (current->distance<d_min)
+	  continue;
+	d_min=current->distance;
         if (output.onBorder(current->r, current->c))
             continue;
 
@@ -73,16 +79,18 @@ bool DijkstraPathSearch::compute(){
             int dr = child->r - current->r;
             int dc = child->c - current->c;
             float step_cost=(dr==0||dc==0) ? _cell_traversal_cost : _cell_traversal_cost_diagonal;
-            float this_cost;
-            float cost_difference=current->cost-child->cost;
 
-            if(cost_difference<0)
-                this_cost=child->cost*fabs(cost_difference);
-            else
-                this_cost=child->cost/cost_difference;
+	    // adjust the cost based on the difference between source and target
 
-            step_cost*=this_cost;
-            float estimated_distance=step_cost+current->distance;
+	    float cost_difference=child->cost-current->cost;
+
+	    float adjusted_cost=std::max(_cost_factor_proportional, 
+					 _cost_factor_proportional*child->cost+
+					 _cost_factor_differential*cost_difference);
+	    
+            step_cost*=adjusted_cost;
+
+	    float estimated_distance=step_cost+current->distance;
             if (child->distance>estimated_distance) {
                 child->parent = current;
                 child->distance = estimated_distance;
