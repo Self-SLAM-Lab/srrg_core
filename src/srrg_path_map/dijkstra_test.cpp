@@ -60,6 +60,52 @@ bool drawing=false;
 Vector2iVector obstacle_points;
 std::vector<unsigned char> previous_pixel_values;
 
+Vector2iVector map_points;
+
+void computeMapPoints() {
+  int k=0;
+  map_points.resize(indices_image.rows*indices_image.cols);
+  for (int r=0; r<indices_image.rows; ++r) {
+    int* src_ptr=indices_image.ptr<int>(r);
+    for (int c=0; c<indices_image.cols; ++c, ++src_ptr){
+      if (*src_ptr > -1) {
+	map_points[k].x()=r;
+	map_points[k].y()=c;
+	k++;
+      }
+    }
+  }
+  map_points.resize(k);
+}
+
+void generateScan(std::vector<int> ranges,
+		  std::vector<int> indices,
+		  const Eigen::Vector2i& position,
+		  const float range_max) {
+  assert(indices.size()==ranges.size());
+  assert(indices.size());
+  
+  const int num_bins=indices.size();
+  std::fill(ranges.begin(), ranges.end(), range_max);
+  std::fill(indices.begin(), indices.end(), -1);
+  for (size_t idx=0; idx<map_points.size(); ++idx) {
+    const Eigen::Vector2i point = map_points[idx]-position;
+    int range=point.squaredNorm();
+    float angle=atan2(point.y(), point.x());
+    int bin=(num_bins/(2*M_PI)) * (angle+M_PI);
+    if (bin<0)
+      bin=0;
+    if (bin>=num_bins)
+      bin=num_bins-1;
+    if (ranges[bin]>range) {
+      ranges[bin]=range;
+      indices[bin]=idx;
+    }
+  }
+}
+
+
+
 static void mouseEventHandler( int event, int x, int y, int flags, void* userdata) {
   if (!paint_brush && event==cv::EVENT_LBUTTONDOWN){
     origins.push_back(Eigen::Vector2i(y,x));
@@ -119,18 +165,24 @@ static void onCostTrackbar(int, void*) {
   recompute_cost=true;
 }
 
-void computeVoronoi() {
+void computeVoronoiDiagram() {
   int rows = distance_map.rows();
   int cols = distance_map.cols();
   
   voronoi_image.create(rows, cols);
-  voronoi_image = 0;
+  voronoi_image = 1;
   float max_val=0;
 
+  float voronoi_distance_min_threshold=16;
   
   for (int r= 1; r<rows-1; ++r) {
     for (int c= 1; c<cols-1; ++c){
       PathMapCell* current= &distance_map(r,c);
+      if (distance_image.at<float>(r,c)<=0)
+	continue;
+      if (current->distance < voronoi_distance_min_threshold)
+	continue;
+      
       // a voronoi cell is a cell whose neighbors have different parents
 
       if (current->parent==nullptr)
@@ -150,27 +202,39 @@ void computeVoronoi() {
 	  dc.normalize();
 	  float delta= dp.dot(dc);
 	  if ( delta < voronoi_incidence_threshold)
-	    voronoi_image.at<float>(r,c)=1;
+	    voronoi_image.at<float>(r,c)=0;
 	}
       }
     }
   }
 }
 
+
 void showPaths() {
   if(goal.x()<0)
     return;
   cv::circle(shown_image, cv::Point(goal.y(), goal.x()), 3, cv::Scalar(100.0f), 3.0f);
-
+  computeMapPoints();
+  cerr << "num_points: " << map_points.size() << endl;
   for (const Eigen::Vector2i& origin:origins) {
     cv::circle(shown_image, cv::Point(origin.y(), origin.x()), 3, cv::Scalar(100.0f)); 
     PathMapCell* current=&path_map(origin.x(), origin.y());
+
+    std::vector<int> ranges(1024);
+    std::vector<int> indices(1024);
+    int squared_range=400;
+    
     while (current&& current->parent && current->parent!=current) {
       PathMapCell* parent=current->parent;
       cv::line(shown_image,
 	       cv::Point(current->c, current->r),
 	       cv::Point(parent->c, parent->r),
 	       cv::Scalar(0.0f));
+
+      // generateScan(ranges, indices,
+      // 		   Eigen::Vector2i(current->c, current->r),
+      // 		   squared_range);
+
       current = current->parent;
     }
   }
@@ -221,7 +285,10 @@ int main(int argc, char** argv){
   cv::createTrackbar("free_threshold", "controls", &free_threshold, 255, onOccupancyTrackbar);
   int resolution_in_mm=1000*resolution;
   cv::createTrackbar("resolution_in_mm", "controls", &resolution_in_mm, 500, onDistanceTrackbar);
-  
+
+  int voronoi_incidence_int=500;
+  cv::createTrackbar("voronoi_incidence_int", "controls", &voronoi_incidence_int, 1000, onDistanceTrackbar);
+
   cvNamedWindow("path");
   int max_cost_int=max_cost;
   cv::createTrackbar("max_cost", "controls", &max_cost_int, 10000, onCostTrackbar);
@@ -261,7 +328,8 @@ int main(int argc, char** argv){
       resolution=1e-3*resolution_in_mm;
       indices2distances(distance_image, indices_image, resolution, safety_region);
       indices2distancePathMap(distance_map, indices_image, resolution, safety_region);
-      computeVoronoi();
+      voronoi_incidence_threshold=1e-3*voronoi_incidence_int;
+      computeVoronoiDiagram();
       recompute_distance=false;
     }
     if (recompute_cost) {
