@@ -145,6 +145,46 @@ namespace srrg_core {
 	}
       }
 
+      //! function to search for all the points near to the query point
+      //! @param answer: the neighbors found
+      //! @param query: the point to search
+      //! @param maximum distance allowed for a point
+      //! @returns void
+
+      void findNeighbors(VectorTDVector& answers,
+                         std::vector<int>& indices,
+                         const VectorTD& query,
+                         const T max_distance) const {
+        switch (_node_type) {
+          case KDTree<T, D>::Leaf: {
+            answers = this->_tree->_points;
+            indices = this->_tree->_indices;
+            return;
+          }
+
+          case KDTree<T, D>::Middle: {
+            bool is_left = side(query);
+            TreeNode* child= is_left ? _left_child : _right_child;
+            if (child) {
+              if (child->_node_type!=KDTree<T, D>::Middle &&
+                  child->_node_type!=KDTree<T, D>::Leaf){
+                std::cerr << "ERROR, calling sanity check (" << _tree << ")" << std::endl;
+                std::cerr << "good queries" << _tree->good_queries << std::endl;
+                std::cerr << "Result: " <<_tree->sanityCheck() << std::endl;
+              }
+              child->findNeighbors(answers, indices, query, max_distance);
+              return;
+            }
+          }
+          return;
+
+          default:
+            throw std::runtime_error("unknown node type");
+            std::cerr << "ERROR, sanity check (" << _tree << ") : " << _tree->sanityCheck() << std::endl;
+
+        }
+      }
+
       size_t numPoints() const {return _num_points;}
 
       size_t minIndex() const { return _min_index; }
@@ -261,6 +301,25 @@ namespace srrg_core {
       good_queries++;
       return _root->findNeighbor(answer, index, query, max_distance); 
     
+    }
+
+    //! function to search for all the points in the same leaf of the query point
+    //! @param answers: the neighbors found
+    //! @param indices: the indices of the neighbors found
+    //! @param query: the query point
+    //! @param max_distance: maximum distance allowed for a point
+    //! @returns void
+
+    inline void findNeighbors(VectorTDVector& answers,
+                           std::vector<int>& indices,
+                           const VectorTD& query,
+                           const T max_distance) const {
+      if (!_root) {
+        throw std::runtime_error("no root node");
+      }
+
+      good_queries++;
+      _root->findNeighbors(answers, indices, query, max_distance);
     }
 
     inline void printKDTree() { _printKDTree(_root); }
