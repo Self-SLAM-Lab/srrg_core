@@ -7,7 +7,7 @@
 using namespace srrg_core;
 
 //ds desired precision
-typedef float real;
+typedef double real;
 typedef Eigen::Matrix<real, 3, 3> CameraMatrix;
 typedef Eigen::Matrix<real, 3, 1> Vector3;
 typedef Eigen::Matrix<real, 3, 4> ProjectionMatrix;
@@ -36,26 +36,22 @@ struct MessageKITTI {
 //ds entry point
 int32_t main(int32_t argc, char** argv) {
 
-  //ds arguments: folder_kitti
-  if (argc != 2) {
-    std::cerr << "ERROR: invalid call - use ./srrg_messages_converter_kitti_app kitti_sequence_number (in the respective kitti sequence folder)" << std::endl;
-    std::cerr << "       e.g. ./srrg_messages_converter_kitti_app 00" << std::endl;
+  //ds arguments: <kitti_sequence_number> <kitti_ground_truth_file>
+  if (argc != 3) {
+    std::cerr << "ERROR: invalid call - use ./srrg_messages_converter_kitti_app <kitti_sequence_number.boss/txt> <kitti_ground_truth_file> (in the respective kitti sequence folder)" << std::endl;
+    std::cerr << "       e.g. ./srrg_messages_converter_kitti_app 00.boss 00_gt.txt" << std::endl;
     return 0;
   }
 
-  //ds raw kitti data folder
-  const std::string kitti_sequence_number(argv[1]);
+  //ds outfile configuration
+  const std::string filename(argv[1]);
 
   //ds raw kitti sources
   const std::string filename_images_left("image_0");
   const std::string filename_images_right("image_1");
-  const std::string filename_ground_truth(kitti_sequence_number+"_gt.txt");
+  const std::string filename_ground_truth(argv[2]);
   const std::string filename_timestamps("times.txt");
   const std::string filename_calibration("calib.txt");
-
-  //ds outfile configuration
-  const std::string filename_txt_io(kitti_sequence_number+".txt");
-  const std::string folder_txt_io_images(filename_txt_io+".d/");
 
   //ds dump configuration
   std::cerr << "source  images left: " << filename_images_left << std::endl;
@@ -64,8 +60,7 @@ int32_t main(int32_t argc, char** argv) {
   std::cerr << "         timestamps: " << filename_timestamps << std::endl;
   std::cerr << "        calibration: " << filename_calibration << std::endl;
   std::cerr << std::endl;
-  std::cerr << "txt_io output messages: " << filename_txt_io << std::endl;
-  std::cerr << "                images: " << folder_txt_io_images << std::endl;
+  std::cerr << "output messages:     " << filename << std::endl;
 
   //ds attempt to open all files
   std::ifstream file_images_left(filename_images_left.c_str());
@@ -96,12 +91,6 @@ int32_t main(int32_t argc, char** argv) {
   }
   if (!file_calibration.good() || !file_calibration.is_open()) {
     std::cerr << "ERROR: unable to open source for calibration: " << filename_calibration << std::endl;
-    return 0;
-  }
-
-  //ds attempt to create the image directory - and check for failure
-  if (mkdir(folder_txt_io_images.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0) {
-    std::cerr << "ERROR: unable to create image directory: " << folder_txt_io_images << " (maybe already existing?)" << std::endl;
     return 0;
   }
 
@@ -256,11 +245,11 @@ int32_t main(int32_t argc, char** argv) {
   std::cerr << "loaded messages: " << messages_kitti.size() << std::endl;
 
   //ds open a message writer in the current directory
-  MessageWriter txt_io_message_writer;
-  txt_io_message_writer.open(filename_txt_io);
+  MessageWriter message_writer;
+  message_writer.open(filename);
 
   //ds generate txt_io messages
-  std::cerr << "generating txt_io messages and images: " << std::endl;
+  std::cerr << "generating messages and labeled images: " << std::endl;
   for (std::vector<MessageKITTI>::const_iterator message = messages_kitti.begin(); message != messages_kitti.end(); ++message) {
 
     //ds buffer left and right image
@@ -281,8 +270,6 @@ int32_t main(int32_t argc, char** argv) {
     srrg_core::PinholeImageMessage* message_right= new PinholeImageMessage("/camera_right/image_raw", "camera_right", message->sequence_number, message->timestamp);
 
     //ds set images
-    message_left->setBinaryFilePrefix(folder_txt_io_images);
-    message_right->setBinaryFilePrefix(folder_txt_io_images);
     message_left->setImage(image_left);
     message_right->setImage(image_right);
 
@@ -301,14 +288,15 @@ int32_t main(int32_t argc, char** argv) {
     message_right->setOffset(robot_to_camera_right.inverse().cast<float>());
 
     //ds write to stream
-    txt_io_message_writer.writeMessage(*message_left);
+    message_writer.writeMessage(*message_left);
     delete message_left;
-    txt_io_message_writer.writeMessage(*message_right);
+    message_writer.writeMessage(*message_right);
     delete message_right;
 
     //ds progress info
     std::cerr << "x";
   }
   std::cerr << std::endl;
+  message_writer.close();
   return 0;
 }
