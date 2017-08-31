@@ -13,107 +13,126 @@ namespace srrg_core {
     _is = 0;
     _filename = "";
   }
-  
+
   #define MAX_BUF_SIZE 65535
 
-  BaseMessage* MessageReader::readMessage(){
+  BaseMessage* MessageReader::readMessage() {
     switch (_format) {
-    case TXTIO:
-      {
-	if (! _is)
-	  return 0;
-	char buf[MAX_BUF_SIZE];
-	_is->getline(buf, MAX_BUF_SIZE);
-	istringstream is(buf);
-	std::string tag;
-	is >> tag;
-	BaseMessage* m = MessageFactory::instance()->create(tag);
-	if (!m)
-	  return 0;
-	m->fromStream(is);
-	return m;
+      case TXTIO: {
+        if (! _is)
+          return 0;
+        char buf[MAX_BUF_SIZE];
+        _is->getline(buf, MAX_BUF_SIZE);
+        istringstream is(buf);
+        std::string tag;
+        is >> tag;
+        BaseMessage* m = MessageFactory::instance()->create(tag);
+        if (!m)
+          return 0;
+        m->fromStream(is);
+        return m;
       }
-    case BOSS:
-      {
-	srrg_boss::Serializable* o=_deserializer.readObject();
-	if (!o)
-	  return 0;
-	BaseMessage* msg=dynamic_cast<BaseMessage*>(o);
-	return msg;
+      case BOSS: {
+        srrg_boss::Serializable* o = _deserializer.readObject();
+        if (!o)
+          return 0;
+        BaseMessage* msg=dynamic_cast<BaseMessage*>(o);
+        return msg;
+      }
+      default: {
+        throw std::runtime_error("MessageReader::readMessage|unknown format");
       }
     }
   }
 
   bool MessageReader::good() const {
     switch (_format) {
-    case TXTIO:
-      if (! _is)
-	return false;
-      if (! _is->good())
-	return false;
-      return true;
-    case BOSS:
-      return true; // HACK
+      case TXTIO: {
+        if (! _is)
+          return false;
+        if (! _is->good())
+          return false;
+        return true;
+        break;
+      }
+      case BOSS: {
+        return true; // HACK
+      }
+      default: {
+        throw std::runtime_error("MessageReader::good|unknown format");
+      }
     }
   }
 
-  void MessageReader::open(const std::string& filename_){
-    _filename=filename_;
+  void MessageReader::open(const std::string& filename_) {
+    _filename = filename_;
 
-    if (_format==AUTODETECT) {
-      std::string extension=_filename.substr(_filename.find_last_of(".") + 1);
-      if (extension=="txt" || extension=="txtio"){
-	_format=TXTIO;
+    if (_format == AUTODETECT) {
+      std::string extension = _filename.substr(_filename.find_last_of(".") + 1);
+      if (extension == "txt" || extension == "txtio") {
+        _format = TXTIO;
       } else if(extension=="boss") {
-	_format=BOSS;
+        _format = BOSS;
       }
     }
-    if (_format==AUTODETECT)
+    if (_format == AUTODETECT) {
       throw std::runtime_error("invalid serialization format, check the extension");
+    }
 
     switch (_format) {
-    case TXTIO:
-      if (_is){
-	delete _is;
+      case TXTIO: {
+        if (_is){
+          _is->close();
+          delete _is;
+        }
+        _is = new std::ifstream(_filename.c_str());
+        if (!_is->good()){
+          _is->close();
+          delete _is;
+          _is = 0;
+        }
+        break;
       }
-      _is = new std::ifstream(_filename.c_str());
-      if (! _is->good()){
-	delete _is;
-	_is = 0;
+      case BOSS: {
+        _deserializer.setFilePath(_filename);
+        break;
       }
-    case BOSS:
-      _deserializer.setFilePath(_filename);
-    } 
-    
-  }
-    
-  void MessageReader::close(){
-    switch(_format) {
-    case TXTIO:
-      if (_is){
-	delete _is;
+      default: {
+        throw std::runtime_error("MessageReader::open|unknown format");
       }
-      _is = 0;
-      _filename = "";
-      break;
-    case BOSS:
-      ;
     }
   }
 
-  MessageReader
-  ::~MessageReader() {
+  void MessageReader::close() {
+    switch(_format) {
+      case TXTIO: {
+        if (_is) {
+          _is->close();
+          delete _is;
+        }
+        _is = 0;
+        _filename = "";
+        break;
+      }
+      case BOSS: {
+        break;
+      }
+      default: {
+        throw std::runtime_error("MessageReader::close|unknown format");
+      }
+    }
+  }
+
+  MessageReader::~MessageReader() {
     close();
   }
 
 
   inline std::istream* MessageReader::inputStream() {
-    if (_format==BOSS)
+    if (_format == BOSS)
       throw std::runtime_error("can't get the stream in BOSS mode");
     return _is;
   }
   
-  inline const std::string& MessageReader::filename() const { return _filename; }
-
-  
+  inline const std::string& MessageReader::filename() const {return _filename;}
 }
