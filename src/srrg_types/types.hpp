@@ -47,6 +47,8 @@ namespace srrg_core {
   //!a 3x6 float matrix
   typedef Eigen::Matrix<float, 3, 6> Matrix3_6f;
 
+  //!a 3x6 double matrix
+  typedef Eigen::Matrix<double, 3, 6> Matrix3_6d;
 
   //!a 5x5 float matrix
   typedef Eigen::Matrix<float, 5, 5> Matrix5f;
@@ -54,9 +56,15 @@ namespace srrg_core {
   //!a 6x6 float matrix
   typedef Eigen::Matrix<float, 6, 6> Matrix6f;
 
+  //!a 6x6 double matrix
+  typedef Eigen::Matrix<double, 6, 6> Matrix6d;
+
   //!a 6   float vector
   typedef Eigen::Matrix<float, 6, 1> Vector6f;
   
+  //!a 6 double vector
+  typedef Eigen::Matrix<double, 6, 1> Vector6d;
+
   //!a 7   float vector
   typedef Eigen::Matrix<float, 7, 1> Vector7f;
 
@@ -71,6 +79,9 @@ namespace srrg_core {
 
   //!a 6x3 float matrix
   typedef Eigen::Matrix<float, 6, 3> Matrix6_3f;
+
+  //!a 6x3 double matrix
+  typedef Eigen::Matrix<double, 6, 3> Matrix6_3d;
 
   //!a 5 float cv vector
   typedef cv::Vec<float, 5> Vec5f;
