@@ -114,6 +114,7 @@ void loadParametersCamera(const std::string& filename_camera_,
     index_begin_item = index_end_item+2;
   }
 }
+
 std::map<uint64_t, MeasurementGTIMU> loadGroundTruthForIMU(const std::string& filename_ground_truth_) {
 
   //ds load data file (comma separated values)
@@ -170,6 +171,7 @@ std::map<uint64_t, MeasurementGTIMU> loadGroundTruthForIMU(const std::string& fi
 
   return ground_truth;
 }
+
 std::vector<std::pair<uint64_t, std::string> > loadImages(const std::string& folder_images_) {
 
   //ds stamped images
@@ -194,13 +196,13 @@ std::vector<std::pair<uint64_t, std::string> > loadImages(const std::string& fol
     std::string::size_type index_begin_item = 0;
     std::string::size_type index_end_item   = 0;
 
-    //ds parse timestamp - cutting off the 6 last digits (from nanoseconds to milliseconds)
+    //ds parse timestamp
     index_end_item = buffer_line.find(",", index_begin_item);
-    const uint64_t timestamp_milliseconds = std::atol(buffer_line.substr(index_begin_item, index_end_item-6).c_str());
+    const uint64_t timestamp_nanoseconds = std::atol(buffer_line.substr(index_begin_item, index_end_item).c_str());
     index_begin_item = index_end_item+1;
 
     //ds parse image name and store it
-    images.push_back(std::make_pair(timestamp_milliseconds, image_path+buffer_line.substr(index_begin_item, buffer_line.length()-index_begin_item-1)));
+    images.push_back(std::make_pair(timestamp_nanoseconds, image_path+buffer_line.substr(index_begin_item, buffer_line.length()-index_begin_item-1)));
   }
 
   return images;
@@ -211,129 +213,184 @@ int32_t main(int32_t argc, char** argv) {
 
   //ds arguments at least 2 - optional topic names
   if (argc < 3) {
-    std::cerr << "ERROR: invalid call - use ./srrg_messages_converter_euroc_app -o sequence_name.txt (in the respective euroc ASL format folder)" << std::endl;
+    std::cerr << "ERROR: invalid call - use ./srrg_messages_converter_euroc_app -o <messages.txt> [-parse-gt -hard-calibration]" << std::endl;
     return 0;
   }
 
   //ds obtain configuration
-  std::string file_name_txt_io               = "";
-  std::string topic_name_camera_left         = "/cam0/image_raw";
-  std::string topic_name_camera_right        = "/cam1/image_raw";
-  std::string topic_name_imu                 = "/imu0";
+  std::string outfile_name               = "";
+  std::string topic_name_camera_left  = "/cam0/image_raw";
+  std::string topic_name_camera_right = "/cam1/image_raw";
+  std::string topic_name_imu          = "/imu0";
+  bool option_convert_ground_truth    = true;
+  bool option_use_orbslam_calibration = false;
+
+  //ds parse parameters
   int32_t count_added_arguments = 1;
   while(count_added_arguments < argc){
-    if (! strcmp(argv[count_added_arguments],"-o")){
+    if (!strcmp(argv[count_added_arguments],"-o")) {
       count_added_arguments++;
-      file_name_txt_io = argv[count_added_arguments];
+      outfile_name = argv[count_added_arguments];
+    } else if (!strcmp(argv[count_added_arguments],"-parse-gt")) {
+      option_convert_ground_truth = true;
+      option_use_orbslam_calibration = false;
+    } else if (!strcmp(argv[count_added_arguments],"-hard-calibration")) {
+      option_use_orbslam_calibration = true;
+      option_convert_ground_truth = false;
     }
     count_added_arguments++;
   }
 
   //ds if elementary input is not set
-  if (file_name_txt_io == "") {
-    std::cerr << "ERROR: parameter -o sequence_name not set" << std::endl;
+  if (outfile_name == "") {
+    std::cerr << "ERROR: parameter -o <messages.txt> not set" << std::endl;
     return 0;
   }
 
-  //ds parameter pool: transforms
-  TransformMatrix3D camera_left_to_imu(TransformMatrix3D::Identity());
-  TransformMatrix3D camera_right_to_imu(TransformMatrix3D::Identity());
+  //ds log configuration
+  std::cerr << "topic_name_camera_left: " << topic_name_camera_left << std::endl;
+  std::cerr << "topic_name_camera_right: " << topic_name_camera_right << std::endl;
+  std::cerr << "topic_name_imu: " << topic_name_imu << std::endl;
+  std::cerr << "outfile_name: " << outfile_name << std::endl;
+  std::cerr << "option_convert_ground_truth: " << option_convert_ground_truth << std::endl;
+  std::cerr << "option_use_orbslam_calibration: " << option_use_orbslam_calibration << std::endl;
 
-  //ds parameter pool: distortion coefficients
-  cv::Mat distortion_coefficients_left(5, 1, CV_64F, cv::Scalar(0));
-  cv::Mat distortion_coefficients_right(5, 1, CV_64F, cv::Scalar(0));
-
-  //ds parameter pool: camera matrices
-  Matrix3 camera_matrix_left(Matrix3::Identity());
-  Matrix3 camera_matrix_right(Matrix3::Identity());
-
-  //ds parameter pool: image resolution
-  cv::Size image_size(0, 0);
-
-//  //ds coordinate system adjustment (so our robot has its z axis aligned with the world z axis)
-//  TransformMatrix3D imu_to_robot(TransformMatrix3D::Identity());
-//  imu_to_robot.linear() << 0, 0, 1,
-//                           1, 0, 0,
-//                           0, 1, 0;
-//  const TransformMatrix3D robot_to_imu(imu_to_robot.inverse());
-
-  //ds load configuration files - setting the parameter pool
-  loadParametersCamera("cam0/sensor.yaml", camera_left_to_imu, image_size, camera_matrix_left, distortion_coefficients_left);
-  loadParametersCamera("cam1/sensor.yaml", camera_right_to_imu, image_size, camera_matrix_right, distortion_coefficients_right);
-
+  //ds load images
   std::vector<std::pair<uint64_t, std::string> > images_left  = loadImages("cam0");
   std::vector<std::pair<uint64_t, std::string> > images_right = loadImages("cam1");
+  std::cerr << "loaded images  left: " << images_left.size() << std::endl;
+  std::cerr << "loaded images right: " << images_right.size() << std::endl;
 
-  //ds load ground truth poses
-  std::map<uint64_t, MeasurementGTIMU> ground_truth = loadGroundTruthForIMU("state_groundtruth_estimate0/data.csv");
+  //ds parameter pool
+  cv::Size image_size(752, 480);
+  cv::Mat camera_calibration_matrix_left(cv::Mat::eye(3, 3, CV_64F));
+  cv::Mat camera_calibration_matrix_right(cv::Mat::eye(3, 3, CV_64F));
+  cv::Mat distortion_coefficients_left(cv::Mat::zeros(4, 1, CV_64F));
+  cv::Mat distortion_coefficients_right(cv::Mat::zeros(4, 1, CV_64F));
+  cv::Mat projection_matrix_left(cv::Mat::eye(3, 4, CV_64F));
+  cv::Mat projection_matrix_right(cv::Mat::eye(3, 4, CV_64F));
+  cv::Mat rectification_matrix_left(cv::Mat::eye(3, 3, CV_64F));
+  cv::Mat rectification_matrix_right(cv::Mat::eye(3, 3, CV_64F));
+  TransformMatrix3D camera_left_to_right(TransformMatrix3D::Identity());
 
-  //ds outfile configuration
-  const std::string folder_txt_io_images(file_name_txt_io+".d/");
+  //ds ground truth measurements (optional)
+  std::map<uint64_t, MeasurementGTIMU> ground_truth;
+  TransformMatrix3D camera_left_to_imu(TransformMatrix3D::Identity());
+  TransformMatrix3D camera_right_to_imu(TransformMatrix3D::Identity());
+  if (option_convert_ground_truth) {
 
-  //ds check file input
-  std::cerr << "               camera  left: " << topic_name_camera_left << std::endl;
-  std::cerr << "               camera right: " << topic_name_camera_right << std::endl;
-  std::cerr << "                        imu: " << topic_name_imu << std::endl;
-  std::cerr << "        loaded images  left: " << images_left.size() << std::endl;
-  std::cerr << "        loaded images right: " << images_right.size() << std::endl;
-  std::cerr << "  loaded ground truth poses: " << ground_truth.size() << std::endl;
-  std::cerr << "txt_io output messages: " << file_name_txt_io << std::endl;
-  std::cerr << "                images: " << folder_txt_io_images << std::endl;
+    //ds parameter pool: camera matrices
+    Matrix3 camera_matrix_left_eigen(Matrix3::Identity());
+    Matrix3 camera_matrix_right_eigen(Matrix3::Identity());
 
-  //ds attempt to create the image directory - and check for failure
-  if (mkdir(folder_txt_io_images.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0) {
-    std::cerr << "ERROR: unable to create image directory: " << folder_txt_io_images << " (maybe already existing?)" << std::endl;
-    return 0;
-  }
+  //  //ds coordinate system adjustment (so our robot has its z axis aligned with the world z axis)
+  //  TransformMatrix3D imu_to_robot(TransformMatrix3D::Identity());
+  //  imu_to_robot.linear() << 0, 0, 1,
+  //                           1, 0, 0,
+  //                           0, 1, 0;
+  //  const TransformMatrix3D robot_to_imu(imu_to_robot.inverse());
 
-  //ds compute relative transform
-  const TransformMatrix3D camera_left_to_right = camera_right_to_imu.inverse()*camera_left_to_imu;
+    //ds load configuration files - setting the parameter pool
+    loadParametersCamera("cam0/sensor.yaml", camera_left_to_imu, image_size, camera_matrix_left_eigen, distortion_coefficients_left);
+    loadParametersCamera("cam1/sensor.yaml", camera_right_to_imu, image_size, camera_matrix_right_eigen, distortion_coefficients_right);
 
-  //ds buffered components - set once and assumed to be constant over the whole dataset
-  cv::Mat camera_matrix_left_cv(3, 3, CV_64F, cv::Scalar(0));
-  cv::Mat camera_matrix_right_cv(3, 3, CV_64F, cv::Scalar(0));
-  cv::Mat projection_matrix_left_cv(3, 4, CV_64F, cv::Scalar(0));
-  cv::Mat projection_matrix_right_cv(3, 4, CV_64F, cv::Scalar(0));
-  cv::Mat rectification_matrix_left(3, 3, CV_64F, cv::Scalar(0));
-  cv::Mat rectification_matrix_right(3, 3, CV_64F, cv::Scalar(0));
-  const uint32_t image_width_pixels  = 752;
-  const uint32_t image_height_pixels = 480;
+    //ds load ground truth poses
+    ground_truth = loadGroundTruthForIMU("state_groundtruth_estimate0/data.csv");
+    std::cerr << "loaded ground truth poses: " << ground_truth.size() << std::endl;
 
-  //ds rectification
-  cv::Mat rotation_camera_left_to_right(3, 3, CV_64F, cv::Scalar(0));
-  cv::Mat translation_camera_left_to_right(3, 1, CV_64F, cv::Scalar(0));
-  cv::Mat depth_mapping(4, 4, CV_64F, cv::Scalar(0));
+    //ds compute relative transform
+    camera_left_to_right = camera_right_to_imu.inverse()*camera_left_to_imu;
 
-  //ds buffer matrices to opencv
-  for (int32_t u = 0; u < 3; ++u) {
-    for (int32_t v = 0; v < 3; ++v) {
-      camera_matrix_left_cv.at<double>(u, v)          = camera_matrix_left(u,v);
-      camera_matrix_right_cv.at<double>(u, v)         = camera_matrix_right(u,v);
-      rotation_camera_left_to_right.at<double>(u, v)  = camera_left_to_right.linear()(u,v);
+    //ds rectification
+    cv::Mat rotation_camera_left_to_right(3, 3, CV_64F, cv::Scalar(0));
+    cv::Mat translation_camera_left_to_right(3, 1, CV_64F, cv::Scalar(0));
+    cv::Mat depth_mapping(4, 4, CV_64F, cv::Scalar(0));
+
+    //ds buffer matrices to opencv
+    for (int32_t u = 0; u < 3; ++u) {
+      for (int32_t v = 0; v < 3; ++v) {
+        camera_calibration_matrix_left.at<double>(u, v)  = camera_matrix_left_eigen(u,v);
+        camera_calibration_matrix_right.at<double>(u, v) = camera_matrix_right_eigen(u,v);
+        rotation_camera_left_to_right.at<double>(u, v)   = camera_left_to_right.linear()(u,v);
+      }
+      translation_camera_left_to_right.row(u) = camera_left_to_right.translation()(u);
     }
-    translation_camera_left_to_right.row(u) = camera_left_to_right.translation()(u);
-  }
 
-  //ds compute rectification parameters
-  cv::stereoRectify(camera_matrix_left_cv,
-                    distortion_coefficients_left,
-                    camera_matrix_right_cv,
-                    distortion_coefficients_right,
-                    image_size,
-                    rotation_camera_left_to_right,
-                    translation_camera_left_to_right,
-                    rectification_matrix_left,
-                    rectification_matrix_right,
-                    projection_matrix_left_cv,
-                    projection_matrix_right_cv,
-                    depth_mapping,
-                    CV_CALIB_ZERO_DISPARITY,
-                    0);
+    //ds compute rectification parameters
+    cv::stereoRectify(camera_calibration_matrix_left,
+                      distortion_coefficients_left,
+                      camera_calibration_matrix_right,
+                      distortion_coefficients_right,
+                      image_size,
+                      rotation_camera_left_to_right,
+                      translation_camera_left_to_right,
+                      rectification_matrix_left,
+                      rectification_matrix_right,
+                      projection_matrix_left,
+                      projection_matrix_right,
+                      depth_mapping,
+                      CV_CALIB_ZERO_DISPARITY,
+                      0);
 
-  //ds check if failed
-  if (cv::norm(projection_matrix_left_cv) == 0 || cv::norm(projection_matrix_right_cv) == 0) {
-    std::cerr << "ERROR: rectification parameter retrieval failed" << std::endl;
-    return 0;
+    //ds check if failed
+    if (cv::norm(projection_matrix_left) == 0 || cv::norm(projection_matrix_right) == 0) {
+      std::cerr << "ERROR: rectification parameter retrieval failed" << std::endl;
+      return 0;
+    }
+  } else if (option_use_orbslam_calibration) {
+
+    camera_calibration_matrix_left.at<double>(0,0)  = 458.654;
+    camera_calibration_matrix_left.at<double>(0,2)  = 367.215;
+    camera_calibration_matrix_left.at<double>(1,1)  = 457.296;
+    camera_calibration_matrix_left.at<double>(1,2)  = 248.375;
+    camera_calibration_matrix_right.at<double>(0,0) = 457.587;
+    camera_calibration_matrix_right.at<double>(0,2) = 379.999;
+    camera_calibration_matrix_right.at<double>(1,1) = 456.134;
+    camera_calibration_matrix_right.at<double>(1,2) = 255.238;
+
+    distortion_coefficients_left.at<double>(0)  = -0.28340811;
+    distortion_coefficients_left.at<double>(1)  = 0.07395907;
+    distortion_coefficients_left.at<double>(2)  = 0.00019359;
+    distortion_coefficients_left.at<double>(3)  = 1.76187114e-05;
+    distortion_coefficients_right.at<double>(0) = -0.28368365;
+    distortion_coefficients_right.at<double>(1) = 0.07451284;
+    distortion_coefficients_right.at<double>(2) = -0.00010473;
+    distortion_coefficients_right.at<double>(3) = -3.55590700e-05;
+
+    rectification_matrix_left.at<double>(0,0) = 0.999966347530033;
+    rectification_matrix_left.at<double>(0,1) = -0.001422739138722922;
+    rectification_matrix_left.at<double>(0,2) = 0.008079580483432283;
+    rectification_matrix_left.at<double>(1,0) = 0.001365741834644127;
+    rectification_matrix_left.at<double>(1,1) = 0.9999741760894847;
+    rectification_matrix_left.at<double>(1,2) = 0.007055629199258132;
+    rectification_matrix_left.at<double>(2,0) = -0.008089410156878961;
+    rectification_matrix_left.at<double>(2,1) = -0.007044357138835809;
+    rectification_matrix_left.at<double>(2,2) = 0.9999424675829176;
+
+    rectification_matrix_right.at<double>(0,0) = 0.9999633526194376;
+    rectification_matrix_right.at<double>(0,1) = -0.003625811871560086;
+    rectification_matrix_right.at<double>(0,2) = 0.007755443660172947;
+    rectification_matrix_right.at<double>(1,0) = 0.003680398547259526;
+    rectification_matrix_right.at<double>(1,1) = 0.9999684752771629;
+    rectification_matrix_right.at<double>(1,2) = -0.007035845251224894;
+    rectification_matrix_right.at<double>(2,0) = -0.007729688520722713;
+    rectification_matrix_right.at<double>(2,1) = 0.007064130529506649;
+    rectification_matrix_right.at<double>(2,2) = 0.999945173484644;
+
+    projection_matrix_left.at<double>(0,0) = 435.2046959714599;
+    projection_matrix_left.at<double>(0,2) = 367.4517211914062;
+    projection_matrix_left.at<double>(1,1) = 435.2046959714599;
+    projection_matrix_left.at<double>(1,2) = 252.2008514404297;
+
+    projection_matrix_right.at<double>(0,0) = 435.2046959714599;
+    projection_matrix_right.at<double>(0,2) = 367.4517211914062;
+    projection_matrix_right.at<double>(0,3) = -47.90639384423901;
+    projection_matrix_right.at<double>(1,1) = 435.2046959714599;
+    projection_matrix_right.at<double>(1,2) = 252.2008514404297;
+  } else {
+
+    //ds use default best:
+    throw std::runtime_error("not implemented");
   }
 
   //ds undistortion/rectification
@@ -341,19 +398,19 @@ int32_t main(int32_t argc, char** argv) {
   cv::Mat undistort_rectify_maps_right[2];
 
   //ds compute undistorted and rectified mappings
-  cv::initUndistortRectifyMap(camera_matrix_left_cv,
+  cv::initUndistortRectifyMap(camera_calibration_matrix_left,
                               distortion_coefficients_left,
                               rectification_matrix_left,
-                              projection_matrix_left_cv,
-                              cv::Size(image_width_pixels, image_height_pixels),
+                              projection_matrix_left,
+                              image_size,
                               CV_16SC2,
                               undistort_rectify_maps_left[0],
                               undistort_rectify_maps_left[1]);
-  cv::initUndistortRectifyMap(camera_matrix_right_cv,
+  cv::initUndistortRectifyMap(camera_calibration_matrix_right,
                               distortion_coefficients_right,
                               rectification_matrix_right,
-                              projection_matrix_right_cv,
-                              cv::Size(image_width_pixels, image_height_pixels),
+                              projection_matrix_right,
+                              image_size,
                               CV_16SC2,
                               undistort_rectify_maps_right[0],
                               undistort_rectify_maps_right[1]);
@@ -372,32 +429,32 @@ int32_t main(int32_t argc, char** argv) {
   Matrix3 camera_matrix_rectified(Matrix3::Zero());
   for(uint32_t row = 0; row < 3; ++row) {
     for(uint32_t col = 0; col < 3; ++col) {
-      camera_matrix_rectified(row,col)  = projection_matrix_left_cv.at<double>(row,col);
+      camera_matrix_rectified(row,col)  = projection_matrix_left.at<double>(row,col);
     }
   }
 
   //ds get right projection matrix to eigen space
-  ProjectionMatrix projection_matrix_right(ProjectionMatrix::Zero());
+  ProjectionMatrix projection_matrix_right_eigen(ProjectionMatrix::Zero());
   for(uint32_t row = 0; row < 3; ++row) {
     for(uint32_t col = 0; col < 4; ++col) {
-      projection_matrix_right(row,col) = projection_matrix_right_cv.at<double>(row,col);
+      projection_matrix_right_eigen(row,col) = projection_matrix_right.at<double>(row,col);
     }
   }
 
   //ds consistency check
-  if ((camera_matrix_rectified-projection_matrix_right.block<3,3>(0,0)).norm() != 0) {
+  if ((camera_matrix_rectified-projection_matrix_right_eigen.block<3,3>(0,0)).norm() != 0) {
     std::cerr << "ERROR: inconsistent projection matrices" << std::endl;
     return 0;
   }
 
   //ds compute offset for right camera in order to reconstruct projection matrix form txt_io message
-  const Vector3 offset(camera_matrix_rectified.fullPivLu().solve(projection_matrix_right.block<3,1>(0,3)));
+  const Vector3 offset(camera_matrix_rectified.fullPivLu().solve(projection_matrix_right_eigen.block<3,1>(0,3)));
   TransformMatrix3D camera_left_to_right_rectified(TransformMatrix3D::Identity());
   camera_left_to_right_rectified.translation() = -offset;
 
   //ds open a message writer in the current directory
   MessageWriter txt_io_message_writer;
-  txt_io_message_writer.open(file_name_txt_io);
+  txt_io_message_writer.open(outfile_name);
 
   //ds complete image vector
   std::vector<std::pair<uint64_t, std::string> > images = images_left;
@@ -413,29 +470,31 @@ int32_t main(int32_t argc, char** argv) {
   for (uint32_t message_number = 0; message_number < images.size(); ++message_number) {
 
     //ds look for the ground truth pose
-    uint32_t imprecision_offset = 0;
-    while(imprecision_offset < 10) {
+    if (option_convert_ground_truth) {
+      uint32_t imprecision_offset = 0;
+      while(imprecision_offset < 10) {
 
-      //ds try positive offset
-      try {
-        imu_to_world = ground_truth.at(images[message_number].first+imprecision_offset).imu_to_world;
-        break;
-      } catch(std::out_of_range& /*exception*/) {
-
-        //ds try negative offset
+        //ds try positive offset
         try {
-          imu_to_world = ground_truth.at(images[message_number].first-imprecision_offset).imu_to_world;
+          imu_to_world = ground_truth.at(images[message_number].first+imprecision_offset).imu_to_world;
           break;
         } catch(std::out_of_range& /*exception*/) {
-          ++imprecision_offset;
+
+          //ds try negative offset
+          try {
+            imu_to_world = ground_truth.at(images[message_number].first-imprecision_offset).imu_to_world;
+            break;
+          } catch(std::out_of_range& /*exception*/) {
+            ++imprecision_offset;
+          }
         }
       }
-    }
 
-    //ds check if failed
-    if (10 == imprecision_offset) {
-      std::cerr << "_";
-      continue;
+      //ds check if failed
+      if (10 == imprecision_offset) {
+        std::cerr << "_";
+        continue;
+      }
     }
 
     //ds if left camera
@@ -444,10 +503,10 @@ int32_t main(int32_t argc, char** argv) {
       //ds allocate pinhole image message
       srrg_core::PinholeImageMessage* txt_io_message = new srrg_core::PinholeImageMessage("/camera_left/image_raw", "camera_left");
       txt_io_message->setSeq(sequence_number_image_left);
-      txt_io_message->setTimestamp(images[message_number].first/1e3);
+      txt_io_message->setTimestamp(images[message_number].first/1e9);
 
       //ds set ground truth
-      txt_io_message->setOdometry((imu_to_world*camera_left_to_imu).cast<float>());
+      if (option_convert_ground_truth) {txt_io_message->setOdometry((imu_to_world*camera_left_to_imu).cast<float>());}
 
       //ds preprocess image
       cv::Mat image_raw = cv::imread(images[message_number].second, CV_LOAD_IMAGE_GRAYSCALE);
@@ -460,10 +519,8 @@ int32_t main(int32_t argc, char** argv) {
 
       //ds set image to message
       txt_io_message->setImage(image_undistorted_rectified);
-      txt_io_message->setBinaryFilePrefix(folder_txt_io_images);
 
       //ds save message to disk
-      imwrite((folder_txt_io_images+txt_io_message->binaryFullFilename()).c_str(), txt_io_message->image());
       txt_io_message_writer.writeMessage(*txt_io_message);
       delete txt_io_message;
 
@@ -475,10 +532,10 @@ int32_t main(int32_t argc, char** argv) {
       //ds allocate pinhole image message
       srrg_core::PinholeImageMessage* txt_io_message = new PinholeImageMessage("/camera_right/image_raw", "camera_right");
       txt_io_message->setSeq(sequence_number_image_right);
-      txt_io_message->setTimestamp(images[message_number].first/1e3);
+      txt_io_message->setTimestamp(images[message_number].first/1e9);
 
       //ds set ground truth
-      txt_io_message->setOdometry((imu_to_world*camera_right_to_imu).cast<float>());
+      if (option_convert_ground_truth) {txt_io_message->setOdometry((imu_to_world*camera_right_to_imu).cast<float>());}
 
       //ds preprocess image
       cv::Mat image_raw = cv::imread(images[message_number].second, CV_LOAD_IMAGE_GRAYSCALE);
@@ -491,10 +548,8 @@ int32_t main(int32_t argc, char** argv) {
 
       //ds set image to message
       txt_io_message->setImage(image_undistorted_rectified);
-      txt_io_message->setBinaryFilePrefix(folder_txt_io_images);
 
       //ds save message to disk
-      imwrite((folder_txt_io_images+txt_io_message->binaryFullFilename()).c_str(), txt_io_message->image());
       txt_io_message_writer.writeMessage(*txt_io_message);
       delete txt_io_message;
 
