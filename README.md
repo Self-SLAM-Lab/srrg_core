@@ -25,6 +25,7 @@ The following are some applications provided in the module
 * `srrg_messages_merger_app`: merges two or more txt_io logs preserving the temporal  order
 * `srrg_messages_converter_kitti_app`: converts from kitti_format to txt_io
 * `srrg_messages_sorter_app`: sorts a txt_io log based on the timestamp of the records
+* `visual_feature_tracker`: tracks a specified number of features for a specified descriptor type over a sequence of images
 
 To get the help launch one of the previous programs with the `-h` option
 Example:

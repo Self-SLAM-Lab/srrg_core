@@ -23,3 +23,7 @@ add_executable(srrg_kitti_evaluate_odometry_app srrg_kitti_evaluate_odometry_app
 target_link_libraries(srrg_kitti_evaluate_odometry_app
 srrg_system_utils_library
 )
+
+#ds visual feature tracking example: processes a sequence of images and attempts to track features between each subsequent pair in the sequence
+add_executable(visual_feature_tracker visual_feature_tracker.cpp)
+target_link_libraries(visual_feature_tracker ${OpenCV_LIBS})
