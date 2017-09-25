@@ -505,32 +505,50 @@ const char* banner[] = {
 
 int32_t main (int32_t argc, char** argv) {
 
-    std::string file_tracked_odometry = "";
-    std::string file_ground_truth     = "";
-    std::string file_sequence         = "";
+  //ds always expects 6 arguments
+  if (argc != 7) {
+    srrg_core::printBanner(banner);
+    return 1;
+  }
 
-    int c = 1;
-    while(c < argc) {
-        if (!strcmp(argv[c], "-h")) {
-            srrg_core::printBanner(banner);
-            return 1;
-        } else if (!strcmp(argv[c], "-gt")) {
-            c++;
-            file_ground_truth = argv[c];
-        } else if (!strcmp(argv[c], "-odom")) {
-            c++;
-            file_tracked_odometry = argv[c];
-        } else if (!strcmp(argv[c], "-seq")) {
-            c++;
-            file_sequence = argv[c];
-        }
-        c++;
-    }
+  //ds parameters
+  std::string file_tracked_odometry = "";
+  std::string file_ground_truth     = "";
+  std::string file_sequence         = "";
 
-    if(file_sequence.empty())
-        file_sequence = file_ground_truth;
+  //ds parse parameters
+  int c = 1;
+  while(c < argc) {
+      if (!strcmp(argv[c], "-h")) {
+          srrg_core::printBanner(banner);
+          return 1;
+      } else if (!strcmp(argv[c], "-gt")) {
+          c++;
+          file_ground_truth = argv[c];
+      } else if (!strcmp(argv[c], "-odom")) {
+          c++;
+          file_tracked_odometry = argv[c];
+      } else if (!strcmp(argv[c], "-seq")) {
+          c++;
+          file_sequence = argv[c];
+      }
+      c++;
+  }
 
+  //ds input validation
+  if(file_sequence.empty())
+      file_sequence = file_ground_truth;
 
-    // run evaluation
-    return eval(file_tracked_odometry, file_ground_truth, file_sequence);
+  if (file_sequence.find(".txt") == std::string::npos) {
+    std::cerr << "missing file ending (e.g. txt) in provided sequence file: " << file_sequence << std::endl;
+    return 1;
+  }
+
+  //ds configuration
+  std::cerr << "file_ground_truth: " << file_ground_truth << std::endl;
+  std::cerr << "file_tracked_odometry: " << file_tracked_odometry << std::endl;
+  std::cerr << "file_sequence: " << file_sequence << std::endl;
+
+  // run evaluation
+  return eval(file_tracked_odometry, file_ground_truth, file_sequence);
 }
