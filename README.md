@@ -26,13 +26,12 @@ The following are some applications provided in the package
 * `srrg_messages_converter_kitti_app`: converts from kitti_format to txt_io
 * `srrg_messages_sorter_app`: sorts a txt_io log based on the timestamp of the records
 
-Image processing
+Image processing (Fully self-contained and depending only on OpenCV2/3)
 
 * `visual_tracker`: tracks a specified number of features for a specified descriptor type over a sequence of images
 * `visual_stereo_matcher`: matches a specified number of features for a specified descriptor type of a stereo image pair
 
-To get the help launch one of the previous programs with the `-h` option
-Example:
+To get usage information launch any of the previous programs with the `-h` option:
 
     rosrun srrg_core srrg_messages_merger_app -h
 
