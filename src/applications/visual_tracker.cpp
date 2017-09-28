@@ -5,7 +5,6 @@
 //ds resolve opencv includes
 #include <opencv2/core/version.hpp>
 #include <opencv2/opencv.hpp>
-
 #if CV_MAJOR_VERSION == 2
   //ds no specifics
 #elif CV_MAJOR_VERSION == 3
@@ -14,7 +13,12 @@
   #error OpenCV version not supported
 #endif
 
-const std::string banner = "usage: ./visual_feature_tracker <image_file_name> <image_file_name> [<image_file_name> .. -tracks <integer> -descriptor <brief/orb/brisk>]";
+//ds easy logging macro
+#define LOG_VARIABLE(VARIABLE_) \
+  std::cerr << #VARIABLE_ << ": " << VARIABLE_ << std::endl;
+
+//ds info banner
+const std::string banner = "usage: ./visual_tracker <image_file_name_0> <image_file_name_1> [<image_file_name_x> .. -tracks <integer> -descriptor <brief/orb/brisk/freak>]";
 
 //ds feature handling - nasty globals
 cv::Ptr<cv::FastFeatureDetector> keypoint_detector;
@@ -57,14 +61,20 @@ int32_t main (int32_t argc, char** argv) {
     c++;
   }
 
+  //ds input validation
+  if (image_file_names.empty()) {
+    std::cerr << "ERROR: no images specified (provide at least 2: <image_file_name_0> <image_file_name_1>)" << std::endl;
+    return EXIT_FAILURE;
+  }
+
   //ds log configuration
-  std::cerr << "image_file_names.size(): " << image_file_names.size() << std::endl;
+  LOG_VARIABLE(image_file_names.size())
   std::cerr << "sequence:" << std::endl;
   for (std::string& image_file_name: image_file_names) {
     std::cerr << " " << image_file_name << std::endl;
   }
-  std::cerr << "target_number_of_tracks: " << target_number_of_tracks << std::endl;
-  std::cerr << "descriptor_type: " << descriptor_type << std::endl;
+  LOG_VARIABLE(target_number_of_tracks)
+  LOG_VARIABLE(descriptor_type)
 
   //ds allocate feature handlers
 #if CV_MAJOR_VERSION == 2
@@ -75,6 +85,8 @@ int32_t main (int32_t argc, char** argv) {
     descriptor_extractor = new cv::ORB();
   } else if (descriptor_type == "brisk") {
     descriptor_extractor = new cv::BRISK();
+  } else if (descriptor_type == "freak") {
+    descriptor_extractor = new cv::FREAK();
   } else {
     std::cerr << "ERROR: invalid descriptor_type: " << descriptor_type << std::endl;
     return EXIT_FAILURE;
@@ -95,10 +107,20 @@ int32_t main (int32_t argc, char** argv) {
       std::cerr << "                   to: " << image_file_name << std::endl;
 
       //ds load images from disk
-      cv::Mat image_from = cv::imread(image_file_name_previous);
-      cv::Mat image_to   = cv::imread(image_file_name);
+      const cv::Mat image_from = cv::imread(image_file_name_previous);
+      const cv::Mat image_to   = cv::imread(image_file_name);
 
-      //ds compute tracks (also displays them)
+      //ds if loading failed
+      if (image_from.empty()) {
+        std::cerr << "ERROR: unable to load image: '" << image_file_name_previous << "' (provide absolute path or check current folder)" << std::endl;
+        return EXIT_FAILURE;
+      }
+      if (image_to.empty()) {
+        std::cerr << "ERROR: unable to load image: '" << image_file_name_previous << "' (provide absolute path or check current folder)" << std::endl;
+        return EXIT_FAILURE;
+      }
+
+      //ds compute tracks
       trackExhaustive(image_from, image_to);
     }
     image_file_name_previous = image_file_name;
@@ -154,6 +176,13 @@ void trackExhaustive(const cv::Mat& image_from_, const cv::Mat& image_to_) {
       //ds draw connecting tracks
       cv::line(image_display_combined, keypoint_from.pt, keypoint_to.pt+offset, cv::Scalar(0, 255, 0), 1);
     }
+  }
+
+  //ds log current highest matching distance
+  if (target_number_of_tracks < descriptor_matches.size()) {
+    std::cerr << "current maximum matching distance: " << descriptor_matches[target_number_of_tracks].distance << std::endl;
+  } else {
+    std::cerr << "current maximum matching distance: " << descriptor_matches.back().distance << std::endl;
   }
 
   //ds display image (blocking)

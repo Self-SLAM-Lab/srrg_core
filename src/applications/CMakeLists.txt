@@ -24,6 +24,10 @@ target_link_libraries(srrg_kitti_evaluate_odometry_app
 srrg_system_utils_library
 )
 
-#ds visual feature tracking example: processes a sequence of images and attempts to track features between each subsequent pair in the sequence
-add_executable(visual_feature_tracker visual_feature_tracker.cpp)
-target_link_libraries(visual_feature_tracker ${OpenCV_LIBS})
+#ds visual tracking example: processes a sequence of images and attempts to track features between each subsequent pair in the sequence
+add_executable(visual_tracker visual_tracker.cpp)
+target_link_libraries(visual_tracker ${OpenCV_LIBS})
+
+#ds visual stereo feature matching example: processes a single pair of stereo images and attempts to find epipolar correspondences
+add_executable(visual_stereo_matcher visual_stereo_matcher.cpp)
+target_link_libraries(visual_stereo_matcher ${OpenCV_LIBS})
