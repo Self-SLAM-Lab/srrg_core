@@ -99,9 +99,22 @@ int32_t main (int32_t argc, char** argv) {
   }
   descriptor_matcher = new cv::BFMatcher(cv::NORM_HAMMING);
 #elif CV_MAJOR_VERSION == 3
-//  keypoint_detector    = cv::FastFeatureDetector::create();
-//  descriptor_extractor = cv::xfeatures2d::BriefDescriptorExtractor::create(32);
-//  descriptor_matcher   = cv::BFMatcher::create(cv::NORM_HAMMING);
+  keypoint_detector = cv::FastFeatureDetector::create();
+  if (descriptor_type == "brief") {
+    descriptor_extractor = cv::xfeatures2d::BriefDescriptorExtractor::create(32);
+  } else if (descriptor_type == "orb") {
+    descriptor_extractor = cv::ORB::create();
+  } else if (descriptor_type == "brisk") {
+    descriptor_extractor = cv::BRISK::create();
+  } else if (descriptor_type == "freak") {
+    descriptor_extractor = cv::xfeatures2d::FREAK::create();
+  } else if (descriptor_type == "akaze") {
+    descriptor_extractor = cv::AKAZE::create();
+  } else {
+    std::cerr << "ERROR: invalid descriptor_type: " << descriptor_type << std::endl;
+    return EXIT_FAILURE;
+  }
+  descriptor_matcher   = cv::BFMatcher::create(cv::NORM_HAMMING);
 #endif
 
   //ds load images from disk
@@ -194,11 +207,11 @@ void matchExhaustive(const cv::Mat& image_left_, const cv::Mat& image_right_) {
   if (target_number_of_matches < descriptor_matches.size()) {
     const double average_row_distance = accumulated_row_distance/target_number_of_matches;
     std::cerr << "maximum matching distance: " << descriptor_matches[target_number_of_matches].distance << std::endl;
-    std::cerr << "average row distance: " << average_row_distance << " (0:perfect)" << std::endl;
+    std::cerr << "average row distance: " << average_row_distance << std::endl;
   } else {
     const double average_row_distance = accumulated_row_distance/descriptor_matches.size();
     std::cerr << "maximum matching distance: " << descriptor_matches.back().distance << std::endl;
-    std::cerr << "average row distance: " << average_row_distance << " (0:perfect)" << std::endl;
+    std::cerr << "average row distance: " << average_row_distance << std::endl;
   }
   LOG_VARIABLE(number_of_zero_distances)
   LOG_VARIABLE(number_of_one_distances)

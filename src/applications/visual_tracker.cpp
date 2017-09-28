@@ -93,9 +93,22 @@ int32_t main (int32_t argc, char** argv) {
   }
   descriptor_matcher = new cv::BFMatcher(cv::NORM_HAMMING);
 #elif CV_MAJOR_VERSION == 3
-//  keypoint_detector    = cv::FastFeatureDetector::create();
-//  descriptor_extractor = cv::xfeatures2d::BriefDescriptorExtractor::create(32);
-//  descriptor_matcher   = cv::BFMatcher::create(cv::NORM_HAMMING);
+  keypoint_detector = cv::FastFeatureDetector::create();
+  if (descriptor_type == "brief") {
+    descriptor_extractor = cv::xfeatures2d::BriefDescriptorExtractor::create(32);
+  } else if (descriptor_type == "orb") {
+    descriptor_extractor = cv::ORB::create();
+  } else if (descriptor_type == "brisk") {
+    descriptor_extractor = cv::BRISK::create();
+  } else if (descriptor_type == "freak") {
+    descriptor_extractor = cv::xfeatures2d::FREAK::create();
+  } else if (descriptor_type == "akaze") {
+    descriptor_extractor = cv::AKAZE::create();
+  } else {
+    std::cerr << "ERROR: invalid descriptor_type: " << descriptor_type << std::endl;
+    return EXIT_FAILURE;
+  }
+  descriptor_matcher   = cv::BFMatcher::create(cv::NORM_HAMMING);
 #endif
 
   //ds process all images
