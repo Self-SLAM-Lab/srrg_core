@@ -62,9 +62,9 @@ bool DijkstraPathSearch::compute(){
     while (! q.empty()){
         PathMapCell* current = q.top();
         q.pop();
-	if (current->distance<d_min)
-	  continue;
-	d_min=current->distance;
+        if (current->distance<d_min)
+            continue;
+        d_min=current->distance;
         if (output.onBorder(current->r, current->c))
             continue;
 
@@ -80,17 +80,17 @@ bool DijkstraPathSearch::compute(){
             int dc = child->c - current->c;
             float step_cost=(dr==0||dc==0) ? _cell_traversal_cost : _cell_traversal_cost_diagonal;
 
-	    // adjust the cost based on the difference between source and target
+            // adjust the cost based on the difference between source and target
 
-	    float cost_difference=child->cost-current->cost;
+            float cost_difference=child->cost-current->cost;
 
-	    float adjusted_cost=std::max(_cost_factor_proportional, 
-					 _cost_factor_proportional*child->cost+
-					 _cost_factor_differential*cost_difference);
-	    
+            float adjusted_cost=std::max(_cost_factor_proportional,
+                                         _cost_factor_proportional*child->cost+
+                                         _cost_factor_differential*cost_difference);
+
             step_cost*=adjusted_cost;
 
-	    float estimated_distance=step_cost+current->distance;
+            float estimated_distance=step_cost+current->distance;
             if (child->distance>estimated_distance) {
                 child->parent = current;
                 child->distance = estimated_distance;

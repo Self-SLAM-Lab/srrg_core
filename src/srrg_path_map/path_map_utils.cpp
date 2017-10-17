@@ -2,6 +2,7 @@
 #include "dijkstra_path_search.h"
 #include "distance_map_path_search.h"
 #include "clusterer_path_search.h"
+#include <math.h>
 
 namespace srrg_core {
 
@@ -42,10 +43,10 @@ void grayMap2indices(IntImage& dest,
 }
 
 
-  void indices2distancePathMap(PathMap& distance_map,
-			       const IntImage& indices,
-			       float resolution,
-			       float max_distance) {
+void indices2distancePathMap(PathMap& distance_map,
+                             const IntImage& indices,
+                             float resolution,
+                             float max_distance) {
 
     unsigned int int_max_distance  = max_distance/resolution;
     DistanceMapPathSearch dmap_calculator;
@@ -54,12 +55,12 @@ void grayMap2indices(IntImage& dest,
     dmap_calculator.setOutputPathMap(distance_map);
     dmap_calculator.init();
     dmap_calculator.compute();
-  }
+}
 
-  void indices2distances(FloatImage& distances,
-			 const IntImage& indices,
-			 float resolution,
-			 float max_distance) {
+void indices2distances(FloatImage& distances,
+                       const IntImage& indices,
+                       float resolution,
+                       float max_distance) {
     unsigned int int_max_distance  = max_distance/resolution;
     DistanceMapPathSearch dmap_calculator;
     PathMap distance_map;
@@ -69,8 +70,7 @@ void grayMap2indices(IntImage& dest,
     dmap_calculator.init();
     dmap_calculator.compute();
     distances=dmap_calculator.distanceImage() * resolution;
-
-  }
+}
 
 void indices2customDistances(FloatImage& distances,
                              const IntImage& indices,
@@ -122,13 +122,12 @@ void distances2cost(FloatImage& dest,
     int cols=src.cols;
     dest.create(rows, cols);
     dest=0;
-    int num_occupied=0;
-    int num_free=0;
-    int num_unknown=0;
+    float delta=(safety_region+robot_radius)/2;
     float slope=(max_cost-min_cost)/(robot_radius-safety_region);
     float offset=max_cost-slope*robot_radius;
 
     /*
+    cerr << endl;
     cerr << "robot_radius: " << robot_radius << endl;
     cerr << "safety_region: " << safety_region << endl;
     cerr << "min_cost: " << min_cost << endl;
@@ -136,8 +135,10 @@ void distances2cost(FloatImage& dest,
 
     cerr << "slope: " << slope << endl;
     cerr << "offset: " << max_cost << endl;
+    cerr << "delta: " << delta << endl;
     */
-    
+
+
     for (int r=0; r<rows; ++r){
         float* dest_ptr=dest.ptr<float>(r);
         const float* src_ptr=src.ptr<const float>(r);
@@ -155,6 +156,30 @@ void distances2cost(FloatImage& dest,
             cost=min_cost;
         }
     }
+    return;
+
+
+    //    slope=10;
+    //    for (int r=0; r<rows; ++r){
+    //        float* dest_ptr=dest.ptr<float>(r);
+    //        const float* src_ptr=src.ptr<const float>(r);
+    //        for (int c=0; c<cols; ++c, ++dest_ptr, ++ src_ptr){
+    //            float distance=*src_ptr;
+    //            float& cost = *dest_ptr;
+    //            if (distance<robot_radius){
+    //                cost=max_cost;
+    //                continue;
+    //            }
+
+    //            if(distance<safety_region){
+    //                cost= (1/(1+exp(slope*(distance-delta))))*(max_cost-min_cost) + min_cost;
+    //                continue;
+    //            }
+
+    //            cost=min_cost;
+
+    //        }
+    //    }
 }
 
 void distance2peaks(FloatImage& dest,
@@ -188,30 +213,26 @@ void distance2peaks(FloatImage& dest,
 
 }
 
-  void peaks2clusters(ClustererPathSearch::ClusterVector& clusters,
-		      const FloatImage &src){
-  int rows=src.rows;
-  int cols=src.cols;
-  IntImage regions;
-  regions.create(rows, cols);
-  for (int r=0;r<rows; ++r) {
-    int* regions_ptr=regions.ptr<int>(r);
-    const float* src_ptr=src.ptr<const float>(r);
-    for (int c=0;c<cols; ++c, ++src_ptr, ++ regions_ptr){
-      *regions_ptr = (*src_ptr==0) ? -1 : 0;
+void peaks2clusters(ClustererPathSearch::ClusterVector& clusters,
+                    const FloatImage &src){
+    int rows=src.rows;
+    int cols=src.cols;
+    IntImage regions;
+    regions.create(rows, cols);
+    for (int r=0;r<rows; ++r) {
+        int* regions_ptr=regions.ptr<int>(r);
+        const float* src_ptr=src.ptr<const float>(r);
+        for (int c=0;c<cols; ++c, ++src_ptr, ++ regions_ptr){
+            *regions_ptr = (*src_ptr==0) ? -1 : 0;
+        }
     }
-  }
-  ClustererPathSearch clusterer;
-  PathMap  output_map;
-  clusterer.setOutputPathMap(output_map);
-  clusterer.setRegionsImage(regions);
-  cerr << "init" << endl;
-  clusterer.init();
-  cerr << "compute" << endl;
-  clusterer.compute();
-  cerr << "done" << endl;
-  clusters = clusterer.clusters();
-  cerr << "found " << clusters.size() << " clusters" << endl;
+    ClustererPathSearch clusterer;
+    PathMap  output_map;
+    clusterer.setOutputPathMap(output_map);
+    clusterer.setRegionsImage(regions);
+    clusterer.init();
+    clusterer.compute();
+    clusters = clusterer.clusters();
 
 }
 

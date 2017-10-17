@@ -7,6 +7,8 @@ namespace srrg_core {
   public:
     struct Cluster{
       PathMapCell* cell;
+      Eigen::Vector2i lower;
+      Eigen::Vector2i upper;
       float mean_r;
       float mean_c;
       int point_count;

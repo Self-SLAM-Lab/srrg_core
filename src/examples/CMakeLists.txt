@@ -62,3 +62,12 @@ target_link_libraries(srrg_remove_odometry_offset_example_app
   ${Boost_LIBRARIES}
 )
 
+add_executable(srrg_bresenham_example_app srrg_bresenham_example_app.cpp)
+target_link_libraries(srrg_bresenham_example_app
+  srrg_system_utils_library
+  srrg_core_types_library
+  srrg_image_utils_library
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
