@@ -2,21 +2,18 @@ add_executable(srrg_message_converter_kitti_app srrg_message_converter_kitti_app
 target_link_libraries(srrg_message_converter_kitti_app
   srrg_system_utils_library
   srrg_messages_library
-  ${Boost_LIBRARIES}
 )
 
 add_executable(srrg_message_converter_euroc_app srrg_message_converter_euroc_app.cpp)
 target_link_libraries(srrg_message_converter_euroc_app
   srrg_system_utils_library
   srrg_messages_library
-  ${Boost_LIBRARIES}
 )
 
 add_executable(srrg_message_sorter_app srrg_message_sorter_app.cpp)
 target_link_libraries(srrg_message_sorter_app
   srrg_system_utils_library
   srrg_messages_library
-  ${Boost_LIBRARIES}
 )
 
 add_executable(srrg_kitti_evaluate_odometry_app srrg_kitti_evaluate_odometry_app.cpp)
