@@ -43,11 +43,7 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-
-  <build_depend>srrg_boss</build_depend>
   <build_depend>srrg_cmake_modules</build_depend>
-
-  <run_depend>srrg_boss</run_depend>
   <run_depend>srrg_cmake_modules</run_depend>
 
   

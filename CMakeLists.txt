@@ -31,9 +31,9 @@ message(STATUS "OpenCV_INCLUDE_DIRS: ${OpenCV_INCLUDE_DIRS}")
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  srrg_boss
-)
+# find_package(catkin REQUIRED COMPONENTS
+#   srrg_boss
+# )
 
 # Find Eigen3
 find_package(Eigen3 REQUIRED)
@@ -48,6 +48,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE})
 
+find_package(catkin REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -137,13 +138,14 @@ include_directories(${OPENGL_INCLUDE})
 catkin_package(
   INCLUDE_DIRS src
   LIBRARIES
+  srrg_boss_library
   srrg_core_types_library
   srrg_system_utils_library
   srrg_image_utils_library
   srrg_messages_library
   srrg_path_map_library
-  CATKIN_DEPENDS srrg_boss
-#  DEPENDS system_lib
+#  CATKIN_DEPENDS srrg_boss
+  DEPENDS system_lib
 )
 
 ###########

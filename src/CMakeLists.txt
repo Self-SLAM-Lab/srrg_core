@@ -1,3 +1,4 @@
+add_subdirectory(srrg_boss)
 add_subdirectory(srrg_types)
 add_subdirectory(srrg_system_utils)
 add_subdirectory(srrg_image_utils)
