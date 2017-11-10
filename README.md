@@ -56,6 +56,7 @@ The derived messages are:
 * `IMU_MESSAGE`: _BASE-SENSOR-MESSAGE-FIELDS_, _orientation (qw, qx, qy, qz)_, _angular-velocity_, _linear-acceleration_
 * `JOINT_STATE_MESSAGE`:  _BASE-SENSOR-MESSAGE-FIELDS_, _num-joints_, _joint-name_, _joint-position_, _joint-velocity_, _joint-effort_, _[...]_
 * `LASER_MESSAGE`: _BASE-SENSOR-MESSAGE-FIELDS_, _min-range_, _max-range_, _min-angle_, _max-angle_, _angle-increment_, _time-increment_, _scan-time_, _range-size_, _ranges[...]_, _intensity-size_, _intensitites[...]_
+* `POSE_MESSAGE`: _BASE-SENSOR-MESSAGE-FIELDS_, _pose_, _covariance_
 
 ## Authors
 * Giorgio Grisetti

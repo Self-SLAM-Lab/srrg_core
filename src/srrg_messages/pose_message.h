@@ -6,57 +6,54 @@
 #include <stdint.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <srrg_types/types.hpp>
 
 namespace srrg_core
 {
 
-class CPoseMessage: public BaseSensorMessage
+class PoseMessage: public BaseSensorMessage
 {
 
 //ds ctor/dtor (MUST NOT THROW)
 public:
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    CPoseMessage( const std::string& p_strTopic = "", const std::string& p_strFrameID = "", const int& p_uSeq = -1, const double& p_dTimestamp = -1.0 );
+    PoseMessage(const std::string& topic_ = "",
+                const std::string& frame_id_ = "",
+                const int32_t& sequence_number_ = -1,
+                const double& timestamp_seconds_ = -1.0);
 
 //ds accessors
 public:
 
-  virtual void serialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context);
-  virtual void deserialize(srrg_boss::ObjectData& data, srrg_boss::IdContext& context);
+  virtual void serialize(srrg_boss::ObjectData& data_, srrg_boss::IdContext& context);
+  virtual void deserialize(srrg_boss::ObjectData& data_, srrg_boss::IdContext& context_);
 
+  //ds overrides
+  virtual void fromStream(std::istream& is_message_);
+  virtual void toStream(std::ostream& os_message_) const;
+  virtual const std::string& tag() const {return _tag;}
 
-    //ds overrides
-    virtual void fromStream( std::istream& p_isMessage );
-    virtual void toStream( std::ostream& p_osMessage ) const;
-    virtual const std::string& tag( ) const { return m_strTag; }
+  //ds setters
+  inline void setPose(const Eigen::Isometry3d& pose_) {_pose = pose_;}
+  inline void setCovariance(const Matrix6d& covariance_) {_covariance = covariance_;}
 
-    inline void setOrientationQuaternion( const Eigen::Quaterniond& p_vecOrientationQuaternion ){ m_vecOrientationQuaternion = p_vecOrientationQuaternion; }
-    inline void setOrientationEulerAngles( const Eigen::Vector3d& p_vecOrientationEulerAngles ){ m_vecOrientationEulerAngles = p_vecOrientationEulerAngles; }
-    inline void setOrientationMatrix( const Eigen::Matrix3d& p_matOrientationMatrix ){ m_matOrientationMatrix = p_matOrientationMatrix; }
-    inline void setPosition( const Eigen::Vector3d& p_vecPosition ){ m_vecPosition = p_vecPosition; }
-
-    inline const Eigen::Quaterniond getOrientationQuaternion( ) const { return m_vecOrientationQuaternion; }
-    inline const Eigen::Vector3d getOrientationEulerAngles( ){ return m_vecOrientationEulerAngles; }
-    inline const Eigen::Matrix3d getOrientationMatrix( ){ return m_matOrientationMatrix; }
-    inline const Eigen::Vector3d getPosition( ) const { return m_vecPosition; }
+  //ds getters
+  inline const Eigen::Isometry3d pose() const {return _pose;}
+  inline const Matrix6d covariance() const {return _covariance;}
 
 //ds members (inheritable)
 protected:
 
-    //ds pose specific
-    Eigen::Quaterniond m_vecOrientationQuaternion;
-    Eigen::Vector3d m_vecOrientationEulerAngles;
-    Eigen::Matrix3d m_matOrientationMatrix;
-    Eigen::Vector3d m_vecPosition;
+  //ds pose specific
+  Eigen::Isometry3d _pose;
+  Matrix6d _covariance;
 
 //ds tag
 private:
 
-    static const std::string m_strTag;
-
+  static const std::string _tag;
 };
-
 }  //namespace srrg_core
 
 #endif //#define POSE_MESSAGE_H

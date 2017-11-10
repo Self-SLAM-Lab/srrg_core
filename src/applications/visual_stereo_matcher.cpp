@@ -219,5 +219,6 @@ void matchExhaustive(const cv::Mat& image_left_, const cv::Mat& image_right_) {
 
   //ds display image (blocking)
   cv::imshow("stereo matches (correspondences in same color)", image_display_combined);
+  std::cerr << "press [any key] to terminate" << std::endl;
   cv::waitKey(0);
 }
