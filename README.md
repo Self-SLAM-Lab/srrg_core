@@ -15,7 +15,6 @@ to convert and merge text based log files plus simple image processing tools
 ## Prerequisites
 
 requires:
-* [srrg_boss](https://gitlab.com/srrg-software/srrg_boss)
 * [srrg_cmake_modules](https://gitlab.com/srrg-software/srrg_cmake_modules)
 
 ## Applications
