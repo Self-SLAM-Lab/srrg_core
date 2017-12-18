@@ -25,6 +25,9 @@ srrg_system_utils_library
 add_executable(visual_tracker visual_tracker.cpp)
 target_link_libraries(visual_tracker ${OpenCV_LIBS})
 
+add_executable(visual_tracker_optical_flow visual_tracker_optical_flow.cpp)
+target_link_libraries(visual_tracker_optical_flow ${OpenCV_LIBS})
+
 #ds visual stereo feature matching example: processes a single pair of stereo images and attempts to find epipolar correspondences
 add_executable(visual_stereo_matcher visual_stereo_matcher.cpp)
 target_link_libraries(visual_stereo_matcher ${OpenCV_LIBS})
