@@ -38,6 +38,7 @@ struct KeypointWithDescriptor {
 //! @param[in] image_from_ the preceding image in the motion
 //! @param[in] image_to_ the current image in the motion
 void trackExhaustive(const cv::Mat& image_from_, const cv::Mat& image_to_);
+void trackExhaustiveGood(const cv::Mat& image_from_, const cv::Mat& image_to_);
 
 int32_t main (int32_t argc, char** argv) {
 
@@ -142,6 +143,8 @@ int32_t main (int32_t argc, char** argv) {
 
       //ds compute tracks
       trackExhaustive(image_from, image_to);
+      trackExhaustiveGood(image_from,image_to);
+      cv::waitKey(0);
     }
     //image_file_name_previous = image_file_name;
     image_file_name_previous = image_file_names[0];
@@ -150,7 +153,9 @@ int32_t main (int32_t argc, char** argv) {
 }
 
 void trackExhaustive(const cv::Mat& image_from_, const cv::Mat& image_to_) {
-
+  
+  std::cerr << "###################### FastFeatureDetector" << std::endl;
+  
   //wv detect keypoints in the first image
   std::vector<cv::KeyPoint> keypoints_from;
   float keypoint_size=0;
@@ -164,7 +169,7 @@ void trackExhaustive(const cv::Mat& image_from_, const cv::Mat& image_to_) {
             << " duration per keypoint (ms): " << duration.count()/(keypoints_from.size())*1e3 << std::endl;
 
   
-  //ws compute descriptors for all keypoints_from
+  //wv compute descriptors for all keypoints_from
   cv::Mat descriptors_from;
   time_begin = std::chrono::system_clock::now();
   descriptor_extractor->compute(image_from_, keypoints_from, descriptors_from);
@@ -197,6 +202,7 @@ void trackExhaustive(const cv::Mat& image_from_, const cv::Mat& image_to_) {
   
   //ws extract a descriptor for each point obtained from optical flow
   time_begin = std::chrono::system_clock::now();
+  
   uint number_of_tracks_with_descriptors = 0;
   std::vector<KeypointWithDescriptor> keypoints_with_descriptors_to(num_points);
   
@@ -241,6 +247,126 @@ void trackExhaustive(const cv::Mat& image_from_, const cv::Mat& image_to_) {
       }   
   }
   
-  cv::imshow("tracks (RED: from, BLUE: to)4", image_display_combined);
-  cv::waitKey(0);
+  cv::imshow("tracks (RED: from, BLUE: to) FastFeatureDetector", image_display_combined);
+  //cv::waitKey(0);
+}
+
+void trackExhaustiveGood(const cv::Mat& image_from_, const cv::Mat& image_to_) {
+  
+  std::cerr << "###################### goodFeaturesToTrack" << std::endl;
+  
+  std::vector<cv::KeyPoint> keypoints_from;
+  std::vector<cv::Point2f> points_from;
+  cv::Mat descriptors_from;
+  
+  float keypoint_size = 1;
+  
+  //wv detect keypoints in the first image  
+  const int maxCorners = 2500;
+  double qualityLevel = 0.001;//0.01;
+  double minDistance = 10;//10;
+  int blockSize=3;
+  bool useHarrisDetector=false;
+  double k=0.04;
+   
+  cv::Mat gray; 
+  cv::cvtColor(image_from_.clone(), gray, CV_BGR2GRAY);
+
+  std::chrono::time_point<std::chrono::system_clock> time_begin = std::chrono::system_clock::now();
+  
+  cv::goodFeaturesToTrack(gray, points_from, maxCorners, qualityLevel, minDistance, cv::Mat(), blockSize, useHarrisDetector, k);
+  
+  std::chrono::duration<double> duration = std::chrono::system_clock::now()-time_begin;
+  std::cerr << "detected keypoints: " << points_from.size() << ", "
+            << " duration per keypoint (ms): " << duration.count()/(points_from.size())*1e3 << std::endl;
+
+  //wv convert points into keypoints in order to extract the descriptors	 
+  for(uint i=0; i < points_from.size(); i++){
+    keypoints_from.push_back( cv::KeyPoint(points_from[i], keypoint_size));
+  }
+  
+  
+  //wv compute descriptors for all keypoints_from
+  time_begin = std::chrono::system_clock::now();
+  
+  descriptor_extractor->compute(image_from_, keypoints_from, descriptors_from);
+  
+  duration = std::chrono::system_clock::now()-time_begin;
+  std::cerr << "computed descriptors_from: " << descriptors_from.rows << ", "
+            << " duration per descriptor (ms): " << duration.count()/(descriptors_from.rows)*1e3 << std::endl;
+
+	    
+  //wv get points from keypoints_from in order to use with optical flow
+  points_from.clear();
+  int num_points = keypoints_from.size();
+  for (int i=0; i< num_points; i++) {
+    points_from.push_back(keypoints_from[i].pt);  
+  }
+  
+  
+  //wv get points_to from points_from with optical flow
+  std::vector<cv::Point2f> points_to;
+  std::vector<uchar> status;
+  std::vector<float> err;
+  cv::Size winSize(31,31);
+  int max_lvl = 3;
+  cv::TermCriteria termcrit(cv::TermCriteria::COUNT|cv::TermCriteria::EPS, 20, 0.03);
+  
+  int flags = 0;
+  double migEighThreshold = 0.001;
+  
+  cv::calcOpticalFlowPyrLK(image_from_, image_to_, points_from, points_to, status, err, winSize, max_lvl, termcrit, flags, migEighThreshold); 
+  
+  
+  //ws extract a descriptor for each point obtained from optical flow
+  time_begin = std::chrono::system_clock::now();
+  
+  uint number_of_tracks_with_descriptors = 0;
+  std::vector<KeypointWithDescriptor> keypoints_with_descriptors_to(num_points);
+  
+  for( int i = 0; i < num_points; i++){
+    std::vector<cv::KeyPoint> keypoints_buffer(1, cv::KeyPoint(points_to[i], keypoint_size));
+    
+    cv::Mat descriptor;
+    descriptor_extractor->compute(image_to_, keypoints_buffer, descriptor);
+    
+    //ws does not exits a descriptor for the current keypoint
+    if (keypoints_buffer.size() == 0) {
+      keypoints_with_descriptors_to[i].available = false;
+    } else {
+    //ws exits a descriptor for the current keypoint
+      keypoints_with_descriptors_to[i].available = true;
+      keypoints_with_descriptors_to[i].keypoint = keypoints_buffer[0];
+      keypoints_with_descriptors_to[i].descriptor = descriptor;
+      ++number_of_tracks_with_descriptors;
+    }
+  }
+  
+  duration = std::chrono::system_clock::now()-time_begin;
+  std::cerr << "computed descriptors_to: " << number_of_tracks_with_descriptors << ", "
+            << " duration per descriptor (ms): " << duration.count()/number_of_tracks_with_descriptors*1e3 << std::endl;
+  
+	    
+  //ws display matches between the two images	    
+  cv::Mat image_display_combined;
+  cv::vconcat(image_from_, image_to_, image_display_combined);
+  const cv::Point2f offset(0, image_from_.rows);
+  
+  for (int i=0; i < num_points; i++) {    
+      if (keypoints_with_descriptors_to[i].available && status[i]) {
+	
+	double norm = cv::norm(descriptors_from.row(i), keypoints_with_descriptors_to[i].descriptor, cv::NORM_HAMMING);
+	if( norm <= norm_threshold){ 
+	  cv::circle(image_display_combined, keypoints_from[i].pt, 3, cv::Scalar(0, 0, 255), 1);
+	  cv::circle(image_display_combined, keypoints_with_descriptors_to[i].keypoint.pt + offset, 3, cv::Scalar(255, 0, 0), 1);
+	  
+	  cv::line(image_display_combined, keypoints_from[i].pt, keypoints_with_descriptors_to[i].keypoint.pt + offset, cv::Scalar(0, 255, 0), 1);
+	}
+      }   
+  }
+  
+  cv::imshow("tracks (RED: from, BLUE: to) goodFeaturesToTrack", image_display_combined);
+  //cv::waitKey(0);
+
+  
 }
