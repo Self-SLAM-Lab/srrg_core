@@ -3,6 +3,8 @@
 #include <vector>
 #include <stdexcept>
 
+#include <iostream>
+
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 #include <Eigen/Eigenvalues> 
