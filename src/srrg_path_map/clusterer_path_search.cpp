@@ -8,6 +8,18 @@ ClustererPathSearch::ClustererPathSearch() {
     _regions_image=0;
 }
 
+void ClustererPathSearch::setColor(int color_){
+    std::stringstream stream;
+    stream << std::setw(6) << std::setfill('0') << std::hex << color_;
+    std::string result(stream.str());
+
+    unsigned long r_value = std::strtoul(result.substr(0,2).c_str(), 0, 16);
+    unsigned long g_value = std::strtoul(result.substr(2,2).c_str(), 0, 16);
+    unsigned long b_value = std::strtoul(result.substr(4,2).c_str(), 0, 16);
+
+    _color = cv::Vec3b(r_value,g_value,b_value);
+
+}
 
 void ClustererPathSearch::init() {
     if (! _output_path_map)
@@ -21,6 +33,9 @@ void ClustererPathSearch::init() {
     if(rows<3 || cols<3){
         throw std::runtime_error("map too small to compute clustrer map");
     }
+
+    _cluster_image.create(rows,cols);
+    _cluster_image = cv::Vec3b(0,0,0);
 
     PathMap& output=*_output_path_map;
     output.resize(rows,cols);
@@ -92,6 +107,9 @@ void ClustererPathSearch::expandRegion(PathMapCell* cell) {
             child->parent=cell;
             r_sum+=child->r;
             c_sum+=child->c;
+
+            _cluster_image.at<cv::Vec3b>(child->r,child->c) = _color;
+
             if(child->r < r_min)
                 r_min = child->r;
             if(child->r > r_max)
