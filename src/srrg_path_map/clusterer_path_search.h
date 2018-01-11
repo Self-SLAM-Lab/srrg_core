@@ -12,6 +12,7 @@ namespace srrg_core {
       float mean_r;
       float mean_c;
       int point_count;
+      std::vector<Eigen::Vector2i> pixels;
     };
     typedef std::vector<Cluster> ClusterVector;
     ClustererPathSearch();
