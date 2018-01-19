@@ -180,6 +180,16 @@ namespace srrg_core {
     return isometry3f;
   }
 
+  //!converts from isometry3f to isometry2f                                                                   
+  //!@param t: an isometry3f
+  //!@returns an isometry2f
+  inline Eigen::Isometry2f toIsometry2f(const Eigen::Isometry3f& isometry3f){
+    Eigen::Isometry2f isometry2f;
+    isometry2f.linear() = isometry3f.linear().block<2,2>(0,0);
+    isometry2f.translation() = isometry3f.translation().head<2>();
+    return isometry2f;
+  }
+
   //!computes the cross product matrix of the vector argument
   //!@param p: the vector
   //!@returns a 3x3 matrix 
