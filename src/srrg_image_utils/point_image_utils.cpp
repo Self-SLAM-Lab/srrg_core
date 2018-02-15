@@ -137,7 +137,7 @@ namespace srrg_core {
 
   void computeCurvature(FloatImage& curvature_image,
                         const Float3Image& normals_image){
-    curvature_image = 0.0f;
+    curvature_image = 1.0f;
     int rows=normals_image.rows;
     int cols=normals_image.cols;
 
