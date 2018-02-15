@@ -1,5 +1,4 @@
 #pragma once
-
 #include <stdexcept>
 #include "base_path_search.h"
 
