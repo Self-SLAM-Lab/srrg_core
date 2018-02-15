@@ -135,6 +135,57 @@ namespace srrg_core {
     }
   }
 
+  void computeCurvature(FloatImage& curvature_image,
+                        const Float3Image& normals_image){
+    curvature_image = 0.0f;
+    int rows=normals_image.rows;
+    int cols=normals_image.cols;
+
+    for(int r=1; r<rows-1; ++r){
+      const cv::Vec3f* normals_ptr = normals_image.ptr<cv::Vec3f>(r)+1;
+      float* curvature_ptr = curvature_image.ptr<float>(r)+1;
+
+      for(int c=1; c<cols-2; ++c, ++curvature_ptr,++normals_ptr){
+
+        if(cv::norm(*normals_ptr) < 1e-3)
+          continue;
+
+        int r_up = (r-1 == 0) ? r : r-1;
+        int r_down = (r+1 == rows) ? r : r+1;
+        int c_left = (c-1 == 0) ? c : c-1;
+        int c_right = (c+1 == cols) ? c : c+1;
+
+        cv::Vec3f up_normal = normals_image.at<cv::Vec3f>(r_up,c);
+        cv::Vec3f down_normal = normals_image.at<cv::Vec3f>(r_down,c);
+        cv::Vec3f left_normal = normals_image.at<cv::Vec3f>(r,c_left);
+        cv::Vec3f right_normal = normals_image.at<cv::Vec3f>(r,c_right);
+
+        if(cv::norm(up_normal) < 1e-3 || cv::norm(down_normal) < 1e-3 ||
+           cv::norm(left_normal) < 1e-3 || cv::norm(right_normal) < 1e-3)
+          continue;
+
+        const Eigen::Vector3f normal_dx ((Eigen::Vector3f(left_normal[0],left_normal[1],left_normal[2])-Eigen::Vector3f(right_normal[0],right_normal[1],right_normal[2]))/2.0f);
+        const Eigen::Vector3f normal_dy ((Eigen::Vector3f(up_normal[0],up_normal[1],up_normal[2])-Eigen::Vector3f(down_normal[0],down_normal[1],down_normal[2]))/2.0f);
+
+        *curvature_ptr = sqrt(normal_dx.squaredNorm()+normal_dy.squaredNorm());
+      }
+    }
+
+  }
+
+  void flipNormals(Float3Image& dest){
+    int rows = dest.rows;
+    int cols = dest.cols;
+    for(int r=0; r < rows; ++r){
+        cv::Vec3f* dest_ptr = dest.ptr<cv::Vec3f>(r);
+        for(int c=0; c < cols; ++c, ++dest_ptr){
+            cv::Vec3f& dest = *dest_ptr;
+            if(dest[2] < 0)
+              dest[2] *= -1;
+          }
+      }
+  }
+
   void normalBlur(Float3Image& dest, const Float3Image& src, int window) {
 
     dest = Float3Image::zeros(src.size());

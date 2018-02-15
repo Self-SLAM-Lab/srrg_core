@@ -62,6 +62,8 @@ namespace srrg_core {
       glPopName();
   }
 
+  
+
   void Cloud3D::transformInPlace(const Eigen::Isometry3f& T) {
     Eigen::Matrix3f R = T.linear();
 #ifdef _GO_PARALLEL_

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdexcept>
 #include "base_path_search.h"
 
@@ -12,6 +14,7 @@ namespace srrg_core {
       float mean_r;
       float mean_c;
       int point_count;
+      cv::Vec3b color;
       std::vector<Eigen::Vector2i> pixels;
     };
     typedef std::vector<Cluster> ClusterVector;
@@ -24,6 +27,7 @@ namespace srrg_core {
     inline void setRegionsImage(const IntImage& regions_image) {_regions_image=&regions_image;}
 
     void setColor(int color_);
+    const cv::Vec3b& color(){return _color;}
 
     virtual void init() override; //< call this once after setting indices image
     

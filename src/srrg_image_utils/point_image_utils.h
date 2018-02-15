@@ -24,6 +24,10 @@ namespace srrg_core {
                             int row_gap,
                             float max_distance);
 
+  void computeCurvature(FloatImage& curvature_image,
+                        const Float3Image& normals_image);
+
+  void flipNormals(Float3Image& dest);
 
   void normalBlur(Float3Image& dest, const Float3Image& src, int window);
   

@@ -135,6 +135,7 @@ namespace srrg_core {
     cluster.upper=Eigen::Vector2i(r_max,c_max);
     cluster.point_count=count;
     cluster.pixels = pixels;
+    cluster.color = _color;
     _clusters.push_back(cluster);
     ++_max_index;
   }
