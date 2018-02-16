@@ -137,9 +137,11 @@ namespace srrg_core {
 
   void computeCurvature(FloatImage& curvature_image,
                         const Float3Image& normals_image){
-    curvature_image = 1.0f;
     int rows=normals_image.rows;
     int cols=normals_image.cols;
+
+    curvature_image.create(rows,cols);
+    curvature_image = 1.0f;
 
     for(int r=1; r<rows-1; ++r){
       const cv::Vec3f* normals_ptr = normals_image.ptr<cv::Vec3f>(r)+1;
