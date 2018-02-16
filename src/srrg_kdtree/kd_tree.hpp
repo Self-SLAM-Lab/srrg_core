@@ -20,7 +20,7 @@ namespace srrg_core {
      and a dimension D
   */  
   template <class T, size_t D>
-    class KDTree {
+  class KDTree {
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     // typedef for defining a vector variable sized points
@@ -47,52 +47,52 @@ namespace srrg_core {
       //! ctor
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
       TreeNode(KDTree<T, D>* tree_, int node_num=0): 
-	_tree(tree_), 
-	_node_num(node_num),
-	_node_type(KDTree<T, D>::Leaf)
+        _tree(tree_), 
+        _node_num(node_num),
+        _node_type(KDTree<T, D>::Leaf)
       {
-	_mean.setZero();
-	_normal.setZero();
-	_left_child=0;
-	_right_child=0;
+        _mean.setZero();
+        _normal.setZero();
+        _left_child=0;
+        _right_child=0;
       }
 
       TreeNode(KDTree<T,D>* tree_,
-		 int node_num, 
-		 const VectorTD& mean_,
-		 const VectorTD& normal_,
-		 TreeNode* left_child = 0,
-	       TreeNode* right_child = 0):
-	_tree(tree_), 
-	_node_num(node_num),
-	_node_type(KDTree<T, D>::Middle)
+               int node_num, 
+               const VectorTD& mean_,
+               const VectorTD& normal_,
+               TreeNode* left_child = 0,
+               TreeNode* right_child = 0):
+        _tree(tree_), 
+        _node_num(node_num),
+        _node_type(KDTree<T, D>::Middle)
       {
-	_min_index=_max_index=-1;
-	assert(normal_.rows() == D);
-	assert(mean_.rows() == D);
-	_normal = normal_;
-	_mean = mean_;
-	_num_points = 0;
-	_left_child = left_child;
-	_right_child = right_child;
-	if (_left_child) {
-	  _num_points += _left_child->numPoints();
-	}
-	if (_right_child) {
-	  _num_points += _right_child->numPoints();
-	}
+        _min_index=_max_index=-1;
+        assert(normal_.rows() == D);
+        assert(mean_.rows() == D);
+        _normal = normal_;
+        _mean = mean_;
+        _num_points = 0;
+        _left_child = left_child;
+        _right_child = right_child;
+        if (_left_child) {
+          _num_points += _left_child->numPoints();
+        }
+        if (_right_child) {
+          _num_points += _right_child->numPoints();
+        }
       }
 
-     //! dtor
+      //! dtor
       ~TreeNode() {
-	if (_left_child) {
-	  delete _left_child;
-	  _left_child = 0;
-	}
-	if (_right_child) {
-	  delete _right_child;
-	  _right_child = 0;
-	}
+        if (_left_child) {
+          delete _left_child;
+          _left_child = 0;
+        }
+        if (_right_child) {
+          delete _right_child;
+          _right_child = 0;
+        }
       }
   
       //! function to search for the neighbor
@@ -101,50 +101,50 @@ namespace srrg_core {
       //! @param maximum distance allowed for a point
       //! @returns the distance of the closest point. -1 if no point found within range
       T findNeighbor(VectorTD& answer,
-		     int& index,
-		     const VectorTD& query, 
-		     const T max_distance) const{
-	switch(_node_type){
-	case KDTree<T, D>::Leaf:
-	  {
-	    T d_max = std::numeric_limits<T>::max();
-	    const VectorTDVector& points=this->_tree->_points;
-	    const std::vector<int>& indices=this->_tree->_indices;
-	    for(size_t i = _min_index; i < _max_index; ++i) {
-	      T d = (points[i] - query).squaredNorm();
-	      if (d < d_max) {
-		answer = points[i];
-	      index = indices[i];
-	      d_max = d;
-	      }
-	    }
+                     int& index,
+                     const VectorTD& query, 
+                     const T max_distance) const{
+        switch(_node_type){
+        case KDTree<T, D>::Leaf:
+          {
+            T d_max = std::numeric_limits<T>::max();
+            const VectorTDVector& points=this->_tree->_points;
+            const std::vector<int>& indices=this->_tree->_indices;
+            for(size_t i = _min_index; i < _max_index; ++i) {
+              T d = (points[i] - query).squaredNorm();
+              if (d < d_max) {
+                answer = points[i];
+                index = indices[i];
+                d_max = d;
+              }
+            }
 
-	    if (d_max > max_distance * max_distance) {
-	      index = -1;
-	      return -1;
-	    }
-	    return d_max;
-	  }
+            if (d_max > max_distance * max_distance) {
+              index = -1;
+              return -1;
+            }
+            return d_max;
+          }
 
-	case KDTree<T, D>::Middle:
-	  {
-	    bool is_left = side(query);
-	    TreeNode* child= is_left ? _left_child : _right_child;
-	    if (child) {
-	      if (child->_node_type!=KDTree<T, D>::Middle &&
-		  child->_node_type!=KDTree<T, D>::Leaf){
-		std::cerr << "ERROR, calling sanity check (" << _tree << ")" << std::endl;
-		std::cerr << "good queries" << _tree->good_queries << std::endl;
-		std::cerr << "Result: " <<_tree->sanityCheck() << std::endl;
-	      }
-	      return child->findNeighbor(answer, index, query, max_distance);
-	    }
-	  }
-	  return -1;
-	default:
-	  throw std::runtime_error("unknown node type");
-	  std::cerr << "ERROR, sanity check ("<< _tree << ") : " << _tree->sanityCheck() << std::endl;
-	}
+        case KDTree<T, D>::Middle:
+          {
+            bool is_left = side(query);
+            TreeNode* child= is_left ? _left_child : _right_child;
+            if (child) {
+              if (child->_node_type!=KDTree<T, D>::Middle &&
+                  child->_node_type!=KDTree<T, D>::Leaf){
+                std::cerr << "ERROR, calling sanity check (" << _tree << ")" << std::endl;
+                std::cerr << "good queries" << _tree->good_queries << std::endl;
+                std::cerr << "Result: " <<_tree->sanityCheck() << std::endl;
+              }
+              return child->findNeighbor(answer, index, query, max_distance);
+            }
+          }
+          return -1;
+        default:
+          throw std::runtime_error("unknown node type");
+          std::cerr << "ERROR, sanity check ("<< _tree << ") : " << _tree->sanityCheck() << std::endl;
+        }
       }
 
       //! function to search for all the points near to the query point
@@ -158,31 +158,31 @@ namespace srrg_core {
                          const VectorTD& query,
                          const T max_distance) const {
         switch (_node_type) {
-          case KDTree<T, D>::Leaf: {
-            answers = this->_tree->_points;
-            indices = this->_tree->_indices;
+        case KDTree<T, D>::Leaf: {
+          answers = this->_tree->_points;
+          indices = this->_tree->_indices;
+          return;
+        }
+
+        case KDTree<T, D>::Middle: {
+          bool is_left = side(query);
+          TreeNode* child= is_left ? _left_child : _right_child;
+          if (child) {
+            if (child->_node_type!=KDTree<T, D>::Middle &&
+                child->_node_type!=KDTree<T, D>::Leaf){
+              std::cerr << "ERROR, calling sanity check (" << _tree << ")" << std::endl;
+              std::cerr << "good queries" << _tree->good_queries << std::endl;
+              std::cerr << "Result: " <<_tree->sanityCheck() << std::endl;
+            }
+            child->findNeighbors(answers, indices, query, max_distance);
             return;
           }
-
-          case KDTree<T, D>::Middle: {
-            bool is_left = side(query);
-            TreeNode* child= is_left ? _left_child : _right_child;
-            if (child) {
-              if (child->_node_type!=KDTree<T, D>::Middle &&
-                  child->_node_type!=KDTree<T, D>::Leaf){
-                std::cerr << "ERROR, calling sanity check (" << _tree << ")" << std::endl;
-                std::cerr << "good queries" << _tree->good_queries << std::endl;
-                std::cerr << "Result: " <<_tree->sanityCheck() << std::endl;
-              }
-              child->findNeighbors(answers, indices, query, max_distance);
-              return;
-            }
-          }
+        }
           return;
 
-          default:
-            throw std::runtime_error("unknown node type");
-            std::cerr << "ERROR, sanity check (" << _tree << ") : " << _tree->sanityCheck() << std::endl;
+        default:
+          throw std::runtime_error("unknown node type");
+          std::cerr << "ERROR, sanity check (" << _tree << ") : " << _tree->sanityCheck() << std::endl;
 
         }
       }
@@ -223,7 +223,7 @@ namespace srrg_core {
     
     //! ctor
     KDTree(const VectorTDVector& points_,
-	   T max_leaf_range, size_t min_leaf_points=20) {
+           T max_leaf_range, size_t min_leaf_points=20) {
       good_queries=0;
       _num_nodes = 0;
       _points = points_;
@@ -232,16 +232,16 @@ namespace srrg_core {
       _aux_indices.resize(points_.size());
       _min_leaf_points=min_leaf_points;
       for(size_t i = 0; i < _indices.size(); ++i) {
-	_indices[i] = i;
+        _indices[i] = i;
       }
       _root = _buildTree(0,
-			 points_.size(),
-			 max_leaf_range,0);
+                         points_.size(),
+                         max_leaf_range,0);
     }
     //! dtor
     ~KDTree() {
       if (_root) {
-	delete _root;
+        delete _root;
       }
       _root = 0;
     }
@@ -251,37 +251,37 @@ namespace srrg_core {
       std::fill(checked_indices.begin(), checked_indices.end(), -1);
       int k=sanityCheck(checked_indices, 0, _root);
       if (k!=_points.size())
-	throw std::runtime_error("illegal size reported");
+        throw std::runtime_error("illegal size reported");
       std::sort(checked_indices.begin(), checked_indices.end(), std::less<int>());
       for (size_t i=0; i<checked_indices.size(); i++) {
-	if (i!=checked_indices[i])
-	  throw std::runtime_error("missing indices");
+        if (i!=checked_indices[i])
+          throw std::runtime_error("missing indices");
       }
       return true;
     }
     
     int sanityCheck(std::vector<int>& checked_indices, int k, const TreeNode* node) const {
       if (! node)
-	return k;
+        return k;
       switch(node->_node_type){
       case KDTree<T,D>::Leaf:
-	for (int i=node->_min_index; i<node->_max_index; i++){
-	  int idx=_indices[i];
-	  if (checked_indices[k]!=-1) {
-	    throw std::runtime_error("writing on an occupied index");
-	  }
-	  checked_indices[k]=idx;
-	  k++;
-	}
-	return k;
+        for (int i=node->_min_index; i<node->_max_index; i++){
+          int idx=_indices[i];
+          if (checked_indices[k]!=-1) {
+            throw std::runtime_error("writing on an occupied index");
+          }
+          checked_indices[k]=idx;
+          k++;
+        }
+        return k;
       case KDTree<T,D>::Middle:
-	k=sanityCheck(checked_indices, k, node->_left_child);
-	k=sanityCheck(checked_indices, k, node->_right_child);
-	return k;
+        k=sanityCheck(checked_indices, k, node->_left_child);
+        k=sanityCheck(checked_indices, k, node->_right_child);
+        return k;
       default:
-	throw std::runtime_error("illegal type index");
+        throw std::runtime_error("illegal type index");
       }
-     }
+    }
 
     //! num_nodes accessor
     inline size_t numNodes() const { return _num_nodes; }
@@ -294,11 +294,11 @@ namespace srrg_core {
     //! @param maximum distance allowed for a point
     //! @returns the distance of the closest point. -1 if no point found within range
     inline T findNeighbor(VectorTD& answer,
-			  int& index, 
-			  const VectorTD& query, 
-			  const T max_distance) const { 
+                          int& index, 
+                          const VectorTD& query, 
+                          const T max_distance) const { 
       if (!_root) {
-	throw std::runtime_error("no root node");
+        throw std::runtime_error("no root node");
       }
       good_queries++;
       return _root->findNeighbor(answer, index, query, max_distance); 
@@ -313,9 +313,9 @@ namespace srrg_core {
     //! @returns void
 
     inline void findNeighbors(VectorTDVector& answers,
-                           std::vector<int>& indices,
-                           const VectorTD& query,
-                           const T max_distance) const {
+                              std::vector<int>& indices,
+                              const VectorTD& query,
+                              const T max_distance) const {
       if (!_root) {
         throw std::runtime_error("no root node");
       }
@@ -328,7 +328,7 @@ namespace srrg_core {
 
     mutable int good_queries;
 
-    protected:    
+  protected:    
     /**
        Partitions a point vector in two vectors, computing the splitting plane
        as the largest eigenvalue of the point covariance
@@ -340,11 +340,11 @@ namespace srrg_core {
        @returns the distance of the farthest point from the plane
     */
     T _splitPoints(VectorTD& mean, VectorTD& normal,
-		   size_t& num_left_points,
-		   const size_t min_index, const size_t max_index) {
+                   size_t& num_left_points,
+                   const size_t min_index, const size_t max_index) {
       // if points empty, nothing to do      
       if (min_index == max_index) {
-	return 0;
+        return 0;
       }
 
       size_t num_points = max_index - min_index;
@@ -353,8 +353,8 @@ namespace srrg_core {
       Eigen::Matrix<T, D, D> squared_sum = Eigen::Matrix<T, D, D>::Zero();
       Eigen::Matrix<T, D, D> covariance = Eigen::Matrix<T, D, D>::Zero();
       for(size_t i = min_index; i < max_index; ++i) {
-	sum += _points[i];
-	squared_sum += _points[i] * _points[i].transpose();
+        sum += _points[i];
+        squared_sum += _points[i] * _points[i].transpose();
       }
       mean = sum * inverse_num_points;
       covariance = squared_sum * inverse_num_points - mean * mean.transpose();
@@ -374,28 +374,28 @@ namespace srrg_core {
       size_t num_left = 0;
       size_t num_right = 0;
       for(size_t i = min_index; i < max_index; ++i) {
-	T distance_from_plane = normal.dot(_points[i] - mean);
-	if (fabs(distance_from_plane) > max_distance_from_plane) {
-	  max_distance_from_plane = fabs(distance_from_plane);
-	}
+        T distance_from_plane = normal.dot(_points[i] - mean);
+        if (fabs(distance_from_plane) > max_distance_from_plane) {
+          max_distance_from_plane = fabs(distance_from_plane);
+        }
 
-	bool side = distance_from_plane < 0;
-	if (side) {
-	  _aux_points[left_index] = _points[i];
-	  _aux_indices[left_index] = _indices[i];
-	  left_index++;
-	  num_left++;
-	} else {	  
-	  right_index--;
-	  _aux_points[right_index] = _points[i];
-	  _aux_indices[right_index] = _indices[i];
-	  num_right++;
-	}
+        bool side = distance_from_plane < 0;
+        if (side) {
+          _aux_points[left_index] = _points[i];
+          _aux_indices[left_index] = _indices[i];
+          left_index++;
+          num_left++;
+        } else {	  
+          right_index--;
+          _aux_points[right_index] = _points[i];
+          _aux_indices[right_index] = _indices[i];
+          num_right++;
+        }
       }
       assert(max_index-min_index == num_right+num_left);
       for(size_t i = min_index; i < max_index; ++i) {
-	_points[i] = _aux_points[i];
-	_indices[i] = _aux_indices[i];
+        _points[i] = _aux_points[i];
+        _indices[i] = _aux_indices[i];
       }
 
       num_left_points = num_left;
@@ -407,12 +407,12 @@ namespace srrg_core {
     //! @param max_leaf_range: specify the size of the "box" below which a leaf node is generated
     //! returns the root of the search tree
     TreeNode* _buildTree(const size_t min_index,
-			     const size_t max_index,
-			 const T max_leaf_range,
-			 int level) {
+                         const size_t max_index,
+                         const T max_leaf_range,
+                         int level) {
       size_t num_points = max_index-min_index;
       if (! num_points) {
-	return 0;
+        return 0;
       }
 
       VectorTD mean;
@@ -420,52 +420,52 @@ namespace srrg_core {
       size_t  num_left_points = 0;
 
       T range = _splitPoints(mean, normal,
-			     num_left_points,
-			     min_index,
-			     max_index);
+                             num_left_points,
+                             min_index,
+                             max_index);
 
       TreeNode* node=0;
       if (range < max_leaf_range || num_points<_min_leaf_points) {
-	node = new TreeNode(this, _num_nodes);
-	node->setMinIndex(min_index);
-	node->setMaxIndex(max_index);
-	node->_num_points=num_points;
+        node = new TreeNode(this, _num_nodes);
+        node->setMinIndex(min_index);
+        node->setMaxIndex(max_index);
+        node->_num_points=num_points;
       } else {
-	TreeNode* left_tree, *right_tree;
+        TreeNode* left_tree, *right_tree;
 
 
 #ifdef __SRRG_PARALLEL_KDTREE__
-	int num_threads=omp_get_max_threads();
-	int split_level=-1;
-	if (level>0)
-	  split_level=floor(log(num_threads)/log(2));
+        int num_threads=omp_get_max_threads();
+        int split_level=-1;
+        if (level>0)
+          split_level=floor(log(num_threads)/log(2));
 
-	if (split_level==level) {
-          #pragma omp parallel sections
-	  {
-            #pragma omp section
-	    {
-	      left_tree = _buildTree(min_index, min_index + num_left_points, max_leaf_range, level+1);
-	    }
-            #pragma omp section
-	    {
-	      right_tree = _buildTree(min_index + num_left_points, max_index, max_leaf_range, level+1);
-	    }
-	  }
-	} else {
+        if (split_level==level) {
+#pragma omp parallel sections
+          {
+#pragma omp section
+            {
+              left_tree = _buildTree(min_index, min_index + num_left_points, max_leaf_range, level+1);
+            }
+#pragma omp section
+            {
+              right_tree = _buildTree(min_index + num_left_points, max_index, max_leaf_range, level+1);
+            }
+          }
+        } else {
 #endif //__SRRG_PARALLEL_KDTREE__
 	  
-	  left_tree = _buildTree(min_index, min_index + num_left_points, max_leaf_range, level+1);
-	  right_tree = _buildTree(min_index + num_left_points, max_index, max_leaf_range, level+1);
+          left_tree = _buildTree(min_index, min_index + num_left_points, max_leaf_range, level+1);
+          right_tree = _buildTree(min_index + num_left_points, max_index, max_leaf_range, level+1);
 #ifdef __SRRG_PARALLEL_KDTREE__
-	}
+        }
 #endif
-	node = new TreeNode(this,
-			    _num_nodes,
-			    mean,
-			    normal,
-			    left_tree,
-			    right_tree);    
+        node = new TreeNode(this,
+                            _num_nodes,
+                            mean,
+                            normal,
+                            left_tree,
+                            right_tree);    
       }
       _num_nodes++;
       return node;
@@ -474,16 +474,16 @@ namespace srrg_core {
     void _printKDTree(TreeNode* node) {
       switch (node->_node_type){
       case KDTree<T,D>::Leaf:
-	std::cerr << "Leaf: " << std::endl;
-	for(size_t i = node->_min_index; i < node->_max_index; ++i) {
-	  std::cerr << _points[i].transpose() << std::endl;
-	}
-	std::cerr << std::endl;
-	break;
+        std::cerr << "Leaf: " << std::endl;
+        for(size_t i = node->_min_index; i < node->_max_index; ++i) {
+          std::cerr << _points[i].transpose() << std::endl;
+        }
+        std::cerr << std::endl;
+        break;
       case KDTree<T,D>::Middle:
-	_printKDTree(node->leftChild());
-	_printKDTree(node->rightChild());
-	break;
+        _printKDTree(node->leftChild());
+        _printKDTree(node->rightChild());
+        break;
       }
     }
 

@@ -40,21 +40,21 @@ namespace srrg_core {
       const Eigen::Vector3f& p = rp.point();
       const Eigen::Vector3f& n = rp.normal();
       if (n.squaredNorm()) {
-	const Eigen::Vector3f& rgb = rp.rgb();
-	if (rgb.squaredNorm()){
-	  glPushAttrib(GL_COLOR);
-	  glColor3f(rgb.x(), rgb.y(), rgb.z());
-	  glNormal3f(n.x(), n.y(), n.z());
-	  glVertex3f(p.x(), p.y(), p.z());
-	  glPopAttrib();
-	} else {
-	  glNormal3f(n.x(), n.y(), n.z());
-	  glVertex3f(p.x(), p.y(), p.z());
-	}
+        const Eigen::Vector3f& rgb = rp.rgb();
+        if (rgb.squaredNorm()){
+          glPushAttrib(GL_COLOR);
+          glColor3f(rgb.x(), rgb.y(), rgb.z());
+          glNormal3f(n.x(), n.y(), n.z());
+          glVertex3f(p.x(), p.y(), p.z());
+          glPopAttrib();
+        } else {
+          glNormal3f(n.x(), n.y(), n.z());
+          glVertex3f(p.x(), p.y(), p.z());
+        }
       } else {
-	Eigen::Vector3f n = -rp.normal().normalized();
-	glNormal3f(n.x(), n.y(), n.z());
-	glVertex3f(p.x(), p.y(), p.z());
+        Eigen::Vector3f n = -rp.normal().normalized();
+        glNormal3f(n.x(), n.y(), n.z());
+        glVertex3f(p.x(), p.y(), p.z());
       }
     }
     glEnd();
@@ -71,12 +71,12 @@ namespace srrg_core {
 #endif
     for (size_t i = 0; i < size(); i++) {
       if (at(i).accumulator() <= 0) {
-	cerr << "size: " << size() << endl;
-	cerr << "index: " << i << endl;
-	cerr << "p: " << at(i).point().transpose() << endl;
-	cerr << "n: " << at(i).normal().transpose() << endl;
-	cerr << "cvi: " << at(i).accumulator() << endl;
-	throw std::runtime_error("cum numm");
+        cerr << "size: " << size() << endl;
+        cerr << "index: " << i << endl;
+        cerr << "p: " << at(i).point().transpose() << endl;
+        cerr << "n: " << at(i).normal().transpose() << endl;
+        cerr << "cvi: " << at(i).accumulator() << endl;
+        throw std::runtime_error("cum numm");
       }
       
       at(i).transformInPlace(T);
@@ -110,19 +110,19 @@ namespace srrg_core {
     }
     bool operator < (const IndexTriplet& o) const {
       if (z < o.z)
-	return true;
+        return true;
       if (z > o.z)
-	return false;
+        return false;
       if (x < o.x)
-	return true;
+        return true;
       if (x > o.x)
-	return false;
+        return false;
       if (y < o.y)
-	return true;
+        return true;
       if (y > o.y)
-	return false;
+        return false;
       if (index < o.index)
-	return true;
+        return true;
       return false;
     }
 
@@ -140,8 +140,8 @@ namespace srrg_core {
       const RichPoint3D& p = at(i);
       Eigen::Vector3f other_p = T * p.point();
       if (other_p.squaredNorm() < range) {
-	at(k) = p;
-	k++;
+        at(k) = p;
+        k++;
       }
     }
     resize(k);
@@ -149,6 +149,9 @@ namespace srrg_core {
 
 
   void Cloud3D::voxelize(float res) {
+    if(!size())
+      return;
+    
     float ires = 1. / res;
     std::vector<IndexTriplet> voxels(size());
     for (size_t i= 0; i < size(); ++i) {
@@ -163,17 +166,17 @@ namespace srrg_core {
       IndexTriplet& triplet = voxels[i];
       int idx = triplet.index;
       if (k >= 0  && voxels[i].sameCell(voxels[i - 1])) {
-	sparse_model[k] += at(idx);
+        sparse_model[k] += at(idx);
       } else {
-	k++;
-	sparse_model[k] = at(idx);
+        k++;
+        sparse_model[k] = at(idx);
       }
       //cerr << voxels[i].x << " " << voxels[i].y << " " << voxels[i].x <<  endl;
     }
     for (int i = 0; i < k; i++) {
       RichPoint3D& p=sparse_model[i];
       if (p.accumulator() <= 0)
-	throw std::runtime_error("null accumulator");
+        throw std::runtime_error("null accumulator");
       p.normalize();
       (*this)[i]=p;
     }
@@ -220,17 +223,17 @@ namespace srrg_core {
     for(size_t i=0; i<size(); i++) {
       const RichPoint3D& p=at(i);
       if (lower.x()>p.point().x())
-	lower.x()=p.point().x();
+        lower.x()=p.point().x();
       if (lower.y()>p.point().y())
-	lower.y()=p.point().y();
+        lower.y()=p.point().y();
       if (lower.z()>p.point().z())
-	lower.z()=p.point().z();
+        lower.z()=p.point().z();
       if (higher.x()<p.point().x())
-	higher.x()=p.point().x();
+        higher.x()=p.point().x();
       if (higher.y()<p.point().y())
-	higher.y()=p.point().y();
+        higher.y()=p.point().y();
       if (higher.z()<p.point().z())
-	higher.z()=p.point().z();
+        higher.z()=p.point().z();
     }
   }
 
