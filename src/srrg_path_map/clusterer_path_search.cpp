@@ -1,6 +1,7 @@
 #include "clusterer_path_search.h"
-
+#include <iomanip>
 #include <iostream>
+
 namespace srrg_core {
   using namespace std;
 

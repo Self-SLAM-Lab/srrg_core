@@ -5,8 +5,8 @@
 #include <limits>
 #include <fstream>
 #include <Eigen/Geometry>
-
 #include <srrg_system_utils/system_utils.h>
+#include <vector>
 
 //ds readability
 typedef Eigen::Matrix<float, 4, 4> Matrix4;
