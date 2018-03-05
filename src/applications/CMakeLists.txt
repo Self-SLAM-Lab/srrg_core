@@ -31,3 +31,7 @@ target_link_libraries(visual_tracker_optical_flow ${OpenCV_LIBS})
 #ds visual stereo feature matching example: processes a single pair of stereo images and attempts to find epipolar correspondences
 add_executable(visual_stereo_matcher visual_stereo_matcher.cpp)
 target_link_libraries(visual_stereo_matcher ${OpenCV_LIBS})
+
+#ds visual, monocular triangulation example for a sequence of images (KITTI dataset)
+add_executable(monocular_sfm monocular_sfm.cpp)
+target_link_libraries(monocular_sfm srrg_messages_library ${OpenCV_LIBS})

@@ -171,9 +171,10 @@ void trackExhaustive(const cv::Mat& image_from_, const cv::Mat& image_to_) {
   //ds sort matches by ascending matching distance
   std::sort(descriptor_matches.begin(), descriptor_matches.end(), [](const cv::DMatch& a_, const cv::DMatch& b_){return a_.distance < b_.distance;});
 
-  //ds display matches (TODO check color conversion)
+  //ds display matches
   cv::Mat image_display_combined;
   cv::vconcat(image_from_, image_to_, image_display_combined);
+  cv::cvtColor(image_display_combined, image_display_combined, CV_GRAY2RGB);
   const cv::Point2f offset(0, image_from_.rows);
 
   //ds draw a selection of the best tracks
