@@ -23,7 +23,7 @@
   std::cerr << #VARIABLE_ << ": " << VARIABLE_ << std::endl
 
 //ds info banner
-const std::string banner = "usage: ./monocular_sfm -messages <kitti-srrg-messages>";
+const std::string banner = "usage: ./triangulator_mono -messages <kitti-srrg-messages>";
 
 //ds feature handling - nasty globals
 cv::Ptr<cv::FastFeatureDetector> keypoint_detector;

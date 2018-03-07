@@ -28,8 +28,8 @@ The following are some applications provided in the package
 Image processing (Fully self-contained and depending only on OpenCV2/3)
 
 * `visual_tracker`: tracks a specified number of features for a specified descriptor type over a sequence of images
-* `visual_stereo_matcher`: matches a specified number of features for a specified descriptor type of a stereo image pair
-* `monocular_sfm`: computes structure from motion by triangulating a stream of monocular images, for validation also stereo triangulation is performed (KITTI only)
+* `triangulator_stereo`: matches a specified number of features for a specified descriptor type of a stereo image pair and computes the underlying structure
+* `triangulator_mono`: computes structure from motion by triangulating a stream of monocular images, for validation also stereo triangulation is performed (KITTI only)
 
 To get usage information launch any of the previous programs with the `-h` option:
 
