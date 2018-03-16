@@ -61,15 +61,17 @@ std::vector<std::pair<KeypointWithDescriptor*, KeypointWithDescriptor*>> getMatc
                                                                                     const std::vector<KeypointWithDescriptor*>& points_b_);
 
 //ds triangulation function
-Eigen::Vector3f getPointTriangulatedMonocular(const Eigen::Matrix3f& camera_calibration_matrix_,
+Eigen::Vector3f getPointTriangulatedLS(const Eigen::Matrix3f& camera_calibration_matrix_,
                                               const std::vector<const KeypointWithDescriptor*>& track_,
                                               const std::vector<Eigen::Isometry3f, Eigen::aligned_allocator<Eigen::Isometry3f>>& world_to_cameras_left_);
 
-Eigen::Vector3f getImagePointNormalized(const cv::Point2f& point_, const Eigen::Matrix3f& camera_calibration_matrix_) {
-  return Eigen::Vector3f((point_.x-camera_calibration_matrix_(0,2))/camera_calibration_matrix_(0,0),
-                         (point_.y-camera_calibration_matrix_(1,2))/camera_calibration_matrix_(0,0),
-                         1);
-}
+Eigen::Vector3f getImagePointNormalized(const cv::Point2f& point_, const Eigen::Matrix3f& camera_calibration_matrix_);
+
+//ds retrieves camera points for two corresponding image points
+std::pair<Eigen::Vector3f, Eigen::Vector3f> getCameraPoints(const cv::Point2f image_point_previous_,
+                                                            const cv::Point2f image_point_current_,
+                                                            const Eigen::Isometry3f& camera_previous_to_current_,
+                                                            const Eigen::Matrix3f& camera_calibration_matrix_);
 
 int32_t main (int32_t argc, char** argv) {
 
@@ -386,7 +388,7 @@ int32_t main (int32_t argc, char** argv) {
           }
 
           //ds triangulate the point!
-          const Eigen::Vector3f point_in_world = getPointTriangulatedMonocular(camera_calibration_matrix, track, world_to_cameras_left);
+          const Eigen::Vector3f point_in_world = getPointTriangulatedLS(camera_calibration_matrix, track, world_to_cameras_left);
           ++number_of_triangulated_tracks;
         }
       }
@@ -464,9 +466,9 @@ std::vector<std::pair<KeypointWithDescriptor*, KeypointWithDescriptor*>> getMatc
   return matches;
 }
 
-Eigen::Vector3f getPointTriangulatedMonocular(const Eigen::Matrix3f& camera_calibration_matrix_,
-                                              const std::vector<const KeypointWithDescriptor*>& track_,
-                                              const std::vector<Eigen::Isometry3f, Eigen::aligned_allocator<Eigen::Isometry3f>>& world_to_cameras_left_) {
+Eigen::Vector3f getPointTriangulatedLS(const Eigen::Matrix3f& camera_calibration_matrix_,
+                                       const std::vector<const KeypointWithDescriptor*>& track_,
+                                       const std::vector<Eigen::Isometry3f, Eigen::aligned_allocator<Eigen::Isometry3f>>& world_to_cameras_left_) {
   if (track_.size() != world_to_cameras_left_.size()) {
     throw std::runtime_error("invalid call");
   }
@@ -478,23 +480,20 @@ Eigen::Vector3f getPointTriangulatedMonocular(const Eigen::Matrix3f& camera_cali
   }
 
   //ds compute initial guess from first and last measurement
-  const Eigen::Isometry3f camera_front_to_back(world_to_cameras_left_.back()*world_to_cameras_left_.front().inverse());
-  const Eigen::Matrix3f essential = camera_front_to_back.linear()*srrg_core::skew(static_cast<Eigen::Vector3f>(camera_front_to_back.translation()));
-  const Eigen::Vector3f point_front(getImagePointNormalized(track_.front()->keypoint.pt, camera_calibration_matrix_));
-  const Eigen::Vector3f point_back(getImagePointNormalized(track_.back()->keypoint.pt, camera_calibration_matrix_));
-//  std::cerr << "essential error: " << point_back.transpose()*essential*point_front << std::endl;
+  const Eigen::Isometry3f& camera_previous_to_world = world_to_cameras_left_.front().inverse();
+  const Eigen::Isometry3f& camera_current_to_world  = world_to_cameras_left_.back().inverse();
+  const Eigen::Isometry3f camera_previous_to_current(camera_current_to_world.inverse()*camera_previous_to_world);
+  std::pair<Eigen::Vector3f, Eigen::Vector3f> camera_points = getCameraPoints(track_.front()->keypoint.pt,
+                                                                              track_.back()->keypoint.pt,
+                                                                              camera_previous_to_current,
+                                                                              camera_calibration_matrix_);
 
-  //ds sample depth TODO use essential constraint for depth guess
-  float sample_depth_meters = 1+camera_front_to_back.translation().norm();
-  const Eigen::Vector3f point_front_in_camera(sample_depth_meters*point_front);
-  const Eigen::Vector3f point_back_in_camera((sample_depth_meters+camera_front_to_back.translation().z())*point_back);
+  //ds obtain world_point candidates
+  const Eigen::Vector3f point_previous_in_world(camera_previous_to_world*camera_points.first);
+  const Eigen::Vector3f point_current_in_world(camera_current_to_world*camera_points.second);
 
-  //ds take both into world
-  const Eigen::Vector3f point_front_in_world(world_to_cameras_left_.front().inverse()*point_front_in_camera);
-  const Eigen::Vector3f point_back_in_world(world_to_cameras_left_.back().inverse()*point_back_in_camera);
-
-  //ds least squares setup
-  Eigen::Vector3f x((point_front_in_world+point_back_in_world)/2);
+  //ds least squares setup - take initial guess from midpoint triangulation
+  Eigen::Vector3f x((point_previous_in_world+point_current_in_world)/2);
   Eigen::Matrix3f H(Eigen::Matrix3f::Zero());
   Eigen::Vector3f b(Eigen::Vector3f::Zero());
   Eigen::Matrix2f omega(Eigen::Matrix2f::Identity());
@@ -506,7 +505,8 @@ Eigen::Vector3f getPointTriangulatedMonocular(const Eigen::Matrix3f& camera_cali
 
   //ds start iterations
   std::cerr << "----------------------------------------------------------------" << std::endl;
-  for (uint32_t u = 0; u < number_of_iterations; ++u) {
+  std::cerr << "[i] mono x = [" << x.transpose() << "] measurements: " << track_.size() << std::endl;
+  for (uint32_t i = 0; i < number_of_iterations; ++i) {
     H.setZero();
     b.setZero();
     float total_error_squared = 0;
@@ -562,7 +562,7 @@ Eigen::Vector3f getPointTriangulatedMonocular(const Eigen::Matrix3f& camera_cali
     //ds update solution with residual
     const Eigen::Vector3f dx = H.ldlt().solve(-b);
     x += dx;
-    std::cerr << "mono x = [" << x.transpose() << "] error: " << total_error_squared
+    std::cerr << "[" << i << "] mono x = [" << x.transpose() << "] error: " << total_error_squared
               << " inliers: " << number_of_inliers << "/" << track_.size() << std::endl;
 
     //ds check for convergence
@@ -588,4 +588,42 @@ Eigen::Vector3f getPointTriangulatedMonocular(const Eigen::Matrix3f& camera_cali
     std::cerr << "not enough inliers, invalid solution - improve initial guess" << std::endl;
   }
   return x;
+}
+
+Eigen::Vector3f getImagePointNormalized(const cv::Point2f& point_, const Eigen::Matrix3f& camera_calibration_matrix_) {
+  return Eigen::Vector3f((point_.x-camera_calibration_matrix_(0,2))/camera_calibration_matrix_(0,0),
+                         (point_.y-camera_calibration_matrix_(1,2))/camera_calibration_matrix_(0,0),
+                         1);
+}
+
+//ds retrieves camera points for two corresponding image points
+std::pair<Eigen::Vector3f, Eigen::Vector3f> getCameraPoints(const cv::Point2f image_point_previous_,
+                                                            const cv::Point2f image_point_current_,
+                                                            const Eigen::Isometry3f& camera_previous_to_current_,
+                                                            const Eigen::Matrix3f& camera_calibration_matrix_) {
+
+  //ds readability
+  const Eigen::Matrix<float, 1, 3>& r_1 = camera_previous_to_current_.linear().block<1,3>(0,0);
+  const Eigen::Matrix<float, 1, 3>& r_2 = camera_previous_to_current_.linear().block<1,3>(1,0);
+  const Eigen::Matrix<float, 1, 3>& r_3 = camera_previous_to_current_.linear().block<1,3>(2,0);
+
+  //ds precomputations
+  const float a_0 = (image_point_previous_.x-camera_calibration_matrix_(0,2))/camera_calibration_matrix_(0,0);
+  const float b_0 = (image_point_previous_.y-camera_calibration_matrix_(1,2))/camera_calibration_matrix_(1,1);
+  const float a_1 = (image_point_current_.x-camera_calibration_matrix_(0,2))/camera_calibration_matrix_(0,0);
+  const float b_1 = (image_point_current_.y-camera_calibration_matrix_(1,2))/camera_calibration_matrix_(1,1);
+  const Eigen::Vector3f x_0(a_0, b_0, 1);
+  const Eigen::Vector3f x_1(a_1, b_1, 1);
+
+  //ds build A matrix
+  Eigen::Matrix<float, 3, 2> A(Eigen::Matrix<float, 3, 2>::Zero());
+  A << -r_1*x_0, a_1,
+       -r_2*x_0, b_1,
+       -r_3*x_0, 1;
+
+  //ds minimize squared error
+  const Eigen::Vector2f z = A.jacobiSvd(Eigen::ComputeThinU|Eigen::ComputeThinV).solve(camera_previous_to_current_.translation());
+
+  //ds return points
+  return std::make_pair(x_0*z(0), x_1*z(0));
 }
