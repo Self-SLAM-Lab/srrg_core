@@ -175,6 +175,19 @@ namespace srrg_core {
     return isometry2f;
   }
 
+
+  template<typename Derived1>
+  inline Eigen::Transform<Derived1, 2, Eigen::Isometry> iso2(const Eigen::Transform<Derived1, 3, Eigen::Isometry> &B){
+    Eigen::Transform<Derived1, 2, Eigen::Isometry> A;
+    A.template translation() = B.template translation().head(2);
+    Eigen::Matrix<Derived1,3,1> v = B.template linear().eulerAngles(0,1,2);
+    Eigen::Rotation2D<Derived1> rot(v(2));
+    Eigen::Matrix<Derived1,2,2> rot_e(rot);
+    A.template linear() = rot_e;
+
+    return A;
+  }
+  
   //!computes the cross product matrix of the vector argument
   //!@param p: the vector
   //!@returns a 3x3 matrix 
@@ -293,6 +306,12 @@ namespace srrg_core {
     return s;
   }
 
+  inline void normalizeAngle(float &theta){
+    theta = atan2(sin(theta),cos(theta));
+  }
+  inline void normalizeAngle(double &theta){
+    theta = atan2(sin(theta),cos(theta));
+  }  
 
   typedef std::vector<int> IntVector;  
 
