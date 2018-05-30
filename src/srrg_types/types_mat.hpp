@@ -160,6 +160,7 @@ namespace srrg_core {
   //!@returns an isometry3f
   inline Eigen::Isometry3f toIsometry3f(const Eigen::Isometry2f& isometry2f){
     Eigen::Isometry3f isometry3f;
+    isometry3f.setIdentity();
     isometry3f.linear().block<2,2>(0,0) = isometry2f.linear();
     isometry3f.translation().head<2>() = isometry2f.translation();
     return isometry3f;
@@ -170,6 +171,7 @@ namespace srrg_core {
   //!@returns an isometry2f
   inline Eigen::Isometry2f toIsometry2f(const Eigen::Isometry3f& isometry3f){
     Eigen::Isometry2f isometry2f;
+    isometry2f.setIdentity();
     isometry2f.linear() = isometry3f.linear().block<2,2>(0,0);
     isometry2f.translation() = isometry3f.translation().head<2>();
     return isometry2f;
