@@ -288,12 +288,14 @@ namespace srrg_core {
   
   inline Eigen::Isometry3f v2tEuler(const Vector6f& v){
     Eigen::Isometry3f T;
+    T.setIdentity();
     T.linear()=Rx(v[3])*Ry(v[4])*Rz(v[5]);
     T.translation()=v.head<3>();
     return T;
   }
   inline Eigen::Isometry3d v2tEuler(const Eigen::Matrix<double, 6, 1>& v){
     Eigen::Isometry3d T;
+    T.setIdentity();
     T.linear()=Rx(v[3])*Ry(v[4])*Rz(v[5]);
     T.translation()=v.head<3>();
     return T;
