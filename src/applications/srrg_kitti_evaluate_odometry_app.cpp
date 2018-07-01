@@ -9,7 +9,8 @@
 #include <vector>
 
 //ds readability
-typedef Eigen::Matrix<float, 4, 4> Matrix4;
+typedef Eigen::Matrix<float, 4, 4> Matrix4f;
+typedef std::vector<Matrix4f, Eigen::aligned_allocator<Matrix4f> > Matrix4fVector;
 
 // static parameter
 // float lengths[] = {5,10,50,100,150,200,250,300,350,400};
@@ -26,8 +27,8 @@ struct errors {
         first_frame(first_frame),r_err(r_err),t_err(t_err),len(len),speed(speed) {}
 };
 
-std::vector<Matrix4> loadPoses(std::string file_name) {
-    std::vector<Matrix4> poses;
+Matrix4fVector loadPoses(std::string file_name) {
+    Matrix4fVector poses;
 
     //ds going modern
     std::ifstream pose_file(file_name, std::ifstream::in);
@@ -40,7 +41,7 @@ std::vector<Matrix4> loadPoses(std::string file_name) {
         std::istringstream buffer_stream(buffer_line);
 
         //ds information fields (KITTI format)
-        Matrix4 pose(Matrix4::Identity());
+        Matrix4f pose(Matrix4f::Identity());
         for (uint8_t u = 0; u < 3; ++u) {
             for (uint8_t v = 0; v < 4; ++v) {
                 buffer_stream >> pose(u,v);
@@ -53,16 +54,16 @@ std::vector<Matrix4> loadPoses(std::string file_name) {
     return poses;
 }
 
-std::vector<float> trajectoryDistances (std::vector<Matrix4> &poses) {
+std::vector<float> trajectoryDistances (Matrix4fVector &poses) {
     std::vector<float> dist;
     dist.push_back(0);
     for (std::size_t i=1; i<poses.size(); i++) {
-        Matrix4 P1 = poses[i-1];
-        Matrix4 P2 = poses[i];
-        float dx = P1(0,3)-P2(0,3);
-        float dy = P1(1,3)-P2(1,3);
-        float dz = P1(2,3)-P2(2,3);
-        dist.push_back(dist[i-1]+std::sqrt(dx*dx+dy*dy+dz*dz));
+      Matrix4f P1 = poses[i-1];
+      Matrix4f P2 = poses[i];
+      float dx = P1(0,3)-P2(0,3);
+      float dy = P1(1,3)-P2(1,3);
+      float dz = P1(2,3)-P2(2,3);
+      dist.push_back(dist[i-1]+std::sqrt(dx*dx+dy*dy+dz*dz));
     }
     return dist;
 }
@@ -74,7 +75,7 @@ int32_t lastFrameFromSegmentLength(std::vector<float> &dist,int32_t first_frame,
     return -1;
 }
 
-inline float rotationError(Matrix4 &pose_error) {
+inline float rotationError(Matrix4f &pose_error) {
     float a = pose_error(0,0);
     float b = pose_error(1,1);
     float c = pose_error(2,2);
@@ -82,14 +83,14 @@ inline float rotationError(Matrix4 &pose_error) {
     return std::acos(std::max(std::min(d,1.0f),-1.0f));
 }
 
-inline float translationError(Matrix4 &pose_error) {
+inline float translationError(Matrix4f &pose_error) {
     float dx = pose_error(0,3);
     float dy = pose_error(1,3);
     float dz = pose_error(2,3);
     return std::sqrt(dx*dx+dy*dy+dz*dz);
 }
 
-std::vector<errors> calcSequenceErrors (std::vector<Matrix4> &poses_gt,std::vector<Matrix4> &poses_result) {
+std::vector<errors> calcSequenceErrors (Matrix4fVector &poses_gt,Matrix4fVector &poses_result) {
 
     // error std::vector
     std::vector<errors> err;
@@ -117,9 +118,9 @@ std::vector<errors> calcSequenceErrors (std::vector<Matrix4> &poses_gt,std::vect
                 continue;
 
             // compute rotational and translational errors
-            Matrix4 pose_delta_gt     = poses_gt[first_frame].inverse()*poses_gt[last_frame];
-            Matrix4 pose_delta_result = poses_result[first_frame].inverse()*poses_result[last_frame];
-            Matrix4 pose_error        = pose_delta_result.inverse()*pose_delta_gt;
+            Matrix4f pose_delta_gt     = poses_gt[first_frame].inverse()*poses_gt[last_frame];
+            Matrix4f pose_delta_result = poses_result[first_frame].inverse()*poses_result[last_frame];
+            Matrix4f pose_error        = pose_delta_result.inverse()*pose_delta_gt;
             float r_err = rotationError(pose_error);
             float t_err = translationError(pose_error);
 
@@ -150,7 +151,7 @@ void saveSequenceErrors (std::vector<errors> &err,std::string file_name) {
     fclose(fp);
 }
 
-void savePathPlot (std::vector<Matrix4> &poses_gt,std::vector<Matrix4> &poses_result,std::string file_name) {
+void savePathPlot (Matrix4fVector &poses_gt,Matrix4fVector &poses_result,std::string file_name) {
 
     // parameters
     int32_t step_size = 3;
@@ -167,21 +168,21 @@ void savePathPlot (std::vector<Matrix4> &poses_gt,std::vector<Matrix4> &poses_re
                 fclose(fp);
 }
 
-std::vector<int32_t> computeRoi (std::vector<Matrix4> &poses_gt,std::vector<Matrix4> &poses_result) {
+std::vector<int32_t> computeRoi (Matrix4fVector &poses_gt,Matrix4fVector &poses_result) {
 
     float x_min = std::numeric_limits<int32_t>::max();
     float x_max = std::numeric_limits<int32_t>::min();
     float z_min = std::numeric_limits<int32_t>::max();
     float z_max = std::numeric_limits<int32_t>::min();
 
-    for (std::vector<Matrix4>::iterator it=poses_gt.begin(); it!=poses_gt.end(); it++) {
+    for (Matrix4fVector::iterator it=poses_gt.begin(); it!=poses_gt.end(); it++) {
         float x = (*it)(0,3);
         float z = (*it)(2,3);
         if (x<x_min) x_min = x; if (x>x_max) x_max = x;
         if (z<z_min) z_min = z; if (z>z_max) z_max = z;
     }
 
-    for (std::vector<Matrix4>::iterator it=poses_result.begin(); it!=poses_result.end(); it++) {
+    for (Matrix4fVector::iterator it=poses_result.begin(); it!=poses_result.end(); it++) {
         float x = (*it)(0,3);
         float z = (*it)(2,3);
         if (x<x_min) x_min = x; if (x>x_max) x_max = x;
@@ -459,8 +460,8 @@ bool eval (const std::string& file_trajectory_test_, const std::string& file_tra
     }
 
     // read ground truth and result poses
-    std::vector<Matrix4> poses_gt     = loadPoses(file_trajectory_ground_truth_);
-    std::vector<Matrix4> poses_result = loadPoses(file_trajectory_test_);
+    Matrix4fVector poses_gt     = loadPoses(file_trajectory_ground_truth_);
+    Matrix4fVector poses_result = loadPoses(file_trajectory_test_);
 
     //ds parse sequence number
     const uint32_t sequence_number = std::stoi(file_sequence_.substr(0, 2));
