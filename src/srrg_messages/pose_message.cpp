@@ -31,12 +31,26 @@ void PoseMessage::fromStream(std::istream& is_message_) {
   throw std::runtime_error("PoseMessage::fromStream is not supported");
 }
 
-void PoseMessage::toStream(std::ostream& os_message_) const {
+void PoseMessage::toStream(std::ostream& os_message_) const
+{
+  //ds stream the base elements
+  BaseSensorMessage::toStream( os_message_ );
 
-  //ds deprecated
-  throw std::runtime_error("PoseMessage::toStream is not supported");
+  os_message_ << " ";
+
+  //ds stream buffer
+  char chBuffer[1024];
+
+  Vector6d pose_vector = t2v(_pose);
+
+  //ds format the buffer
+  sprintf( chBuffer, "%.5lf %.5lf %.5lf %.5lf %.5lf %.5lf",
+           pose_vector[0], pose_vector[1], pose_vector[2],
+           pose_vector[3], pose_vector[4], pose_vector[5] );
+
+  //ds write buffer to stream
+  os_message_ << chBuffer;
 }
-
   //ds register the message for reading
   static MessageFactory::MessageRegisterer<PoseMessage> registerer;
   BOSS_REGISTER_CLASS(PoseMessage);

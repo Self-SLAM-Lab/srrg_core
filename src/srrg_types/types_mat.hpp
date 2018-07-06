@@ -108,6 +108,7 @@ namespace srrg_core {
     }
     return T;
   }
+
   inline Eigen::Isometry3d v2t(const Eigen::Matrix<double, 6, 1>& t){
     Eigen::Isometry3d T;
     T.setIdentity();
@@ -140,6 +141,17 @@ namespace srrg_core {
     return v;
   }
 
+  inline Vector6d t2v(const Eigen::Isometry3d& t) {
+    Vector6d v;
+    v.head<3>()=t.translation();
+    Eigen::Quaterniond q(t.linear());
+    v(3) = q.x();
+    v(4) = q.y();
+    v(5) = q.z();
+    if (q.w()<0)
+      v.block<3,1>(3,0) *= -1.0f;
+    return v;
+  }
   //!converts from isometry to 7 vector                                                                   
   //!@param t: an isometry
   //!@returns a vector (tx, ty, tz, qx, qy, qz, qw) reptesenting the transform.
