@@ -1,4 +1,4 @@
-add_library(srrg_image_utils_library
+add_library(srrg_image_utils_library SHARED
   depth_utils.cpp depth_utils.h
   point_image_utils.cpp point_image_utils.h
   bresenham.cpp bresenham.h
