@@ -7,9 +7,10 @@
 #include <opencv2/core/version.hpp>
 #include <opencv2/opencv.hpp>
 #if CV_MAJOR_VERSION == 2
-  //ds no specifics
 #elif CV_MAJOR_VERSION == 3
-  #include <opencv2/xfeatures2d.hpp>
+  #ifdef SRRG_CORE_HAS_OPENCV_CONTRIB
+    #include <opencv2/xfeatures2d.hpp>
+  #endif
 #else
   #error OpenCV version not supported
 #endif
@@ -137,15 +138,30 @@ int32_t main (int32_t argc, char** argv) {
 #elif CV_MAJOR_VERSION == 3
   keypoint_detector = cv::FastFeatureDetector::create();
   if (descriptor_type == "surf") {
+#ifdef SRRG_CORE_HAS_OPENCV_CONTRIB
     descriptor_extractor = cv::xfeatures2d::SURF::create();
+#else
+    std::cerr << "ERROR: descriptor_type not available: " << descriptor_type << std::endl;
+    return 0;
+#endif
   } else if (descriptor_type == "brief") {
+#ifdef SRRG_CORE_HAS_OPENCV_CONTRIB
     descriptor_extractor = cv::xfeatures2d::BriefDescriptorExtractor::create(32);
+#else
+    std::cerr << "ERROR: descriptor_type not available: " << descriptor_type << std::endl;
+    return 0;
+#endif
   } else if (descriptor_type == "orb") {
     descriptor_extractor = cv::ORB::create();
   } else if (descriptor_type == "brisk") {
     descriptor_extractor = cv::BRISK::create();
   } else if (descriptor_type == "freak") {
+#ifdef SRRG_CORE_HAS_OPENCV_CONTRIB
     descriptor_extractor = cv::xfeatures2d::FREAK::create();
+#else
+    std::cerr << "ERROR: descriptor_type not available: " << descriptor_type << std::endl;
+    return 0;
+#endif
   } else if (descriptor_type == "akaze") {
     descriptor_extractor = cv::AKAZE::create();
   } else {

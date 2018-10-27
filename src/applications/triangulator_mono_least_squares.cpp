@@ -126,22 +126,43 @@ int32_t main (int32_t argc, char** argv) {
   }
   descriptor_matcher = new cv::BFMatcher(cv::NORM_HAMMING);
 #elif CV_MAJOR_VERSION == 3
-  keypoint_detector = cv::FastFeatureDetector::create(fast_detector_threshold);
-  if (descriptor_type == "brief") {
+  keypoint_detector = cv::FastFeatureDetector::create();
+  if (descriptor_type == "surf") {
+#ifdef SRRG_CORE_HAS_OPENCV_CONTRIB
+    descriptor_extractor = cv::xfeatures2d::SURF::create();
+#else
+    std::cerr << "ERROR: descriptor_type not available: " << descriptor_type << std::endl;
+    return 0;
+#endif
+  } else if (descriptor_type == "brief") {
+#ifdef SRRG_CORE_HAS_OPENCV_CONTRIB
     descriptor_extractor = cv::xfeatures2d::BriefDescriptorExtractor::create(32);
+#else
+    std::cerr << "ERROR: descriptor_type not available: " << descriptor_type << std::endl;
+    return 0;
+#endif
   } else if (descriptor_type == "orb") {
     descriptor_extractor = cv::ORB::create();
   } else if (descriptor_type == "brisk") {
     descriptor_extractor = cv::BRISK::create();
   } else if (descriptor_type == "freak") {
+#ifdef SRRG_CORE_HAS_OPENCV_CONTRIB
     descriptor_extractor = cv::xfeatures2d::FREAK::create();
+#else
+    std::cerr << "ERROR: descriptor_type not available: " << descriptor_type << std::endl;
+    return 0;
+#endif
   } else if (descriptor_type == "akaze") {
     descriptor_extractor = cv::AKAZE::create();
   } else {
     std::cerr << "ERROR: invalid descriptor_type: " << descriptor_type << std::endl;
-    return EXIT_FAILURE;
+    return 0;
   }
-  descriptor_matcher   = cv::BFMatcher::create(cv::NORM_HAMMING);
+  if (descriptor_type == "surf") {
+    descriptor_matcher = cv::BFMatcher::create(cv::NORM_L2);
+  } else {
+    descriptor_matcher = cv::BFMatcher::create(cv::NORM_HAMMING);
+  }
 #endif
 
   //ds message playback

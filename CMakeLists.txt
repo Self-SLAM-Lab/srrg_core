@@ -11,35 +11,49 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=gnu++11 -march=native")
 
 find_package(srrg_cmake_modules REQUIRED)
 set(CMAKE_MODULE_PATH ${srrg_cmake_modules_INCLUDE_DIRS})
+find_package(catkin REQUIRED)
 
 set(CMAKE_BUILD_TYPE Release)
 
-message(STATUS "PROCESSOR_TYPE: [${CMAKE_HOST_SYSTEM_PROCESSOR}]")
+message("${PROJECT_NAME}|PROCESSOR_TYPE: [${CMAKE_HOST_SYSTEM_PROCESSOR}]")
 if (${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES armv7l)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard -funsafe-math-optimizations")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard -funsafe-math-optimizations")
-  message("ENABLING ARM NEON OPTIMIZATIONS")
+  message("${PROJECT_NAME}|ENABLING ARM NEON OPTIMIZATIONS")
 endif ()
 
-find_package(OpenCV REQUIRED)
-message(STATUS "${PROJECT_NAME}: OpenCV version ${OpenCV_VERSION}")
+#ds before looking for OpenCV - check if a supported ros version is installed - in that case we will use that OpenCV version
+if("$ENV{ROS_DISTRO}" STREQUAL "kinetic" OR "$ENV{ROS_DISTRO}" STREQUAL "indigo" OR "$ENV{ROS_DISTRO}" STREQUAL "melodic")
+  message("${PROJECT_NAME}|found ROS version: '$ENV{ROS_DISTRO}' linking against ROS OpenCV")
+  
+  #ds load opencv through ROS
+  find_package(catkin REQUIRED COMPONENTS
+    cv_bridge
+    image_geometry
+  )
+  set(OpenCV_LIBS ${catkin_LIBRARIES})
+else()
+
+  #ds look for a separately installed opencv library
+  find_package(OpenCV REQUIRED)
+endif()
 include_directories(${OpenCV_INCLUDE_DIRS})
-message(STATUS "OpenCV_INCLUDE_DIRS: ${OpenCV_INCLUDE_DIRS}")
+message("${PROJECT_NAME}|OpenCV version ${OpenCV_VERSION}")
+
+#ds check if we have contributed features in opencv (optional)
+string(FIND "${OpenCV_LIBS}" "xfeatures2d" FOUND_OPENCV_CONTRIB)
+if(NOT ${FOUND_OPENCV_CONTRIB} EQUAL -1)
+  message("${PROJECT_NAME}|found xfeatures2d library, building contributed OpenCV components")
+  add_definitions(-DSRRG_CORE_HAS_OPENCV_CONTRIB)
+endif()
 
 # Find Eigen3
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
-#ds OpenCV - OpenCV_DIR might be overwritten by user
-find_package(OpenCV REQUIRED)
-message("using OpenCV version ${OpenCV_VERSION} (${OpenCV_DIR})")
-include_directories(${OpenCV_INCLUDE_DIRS})
-
 # Find OpenGL
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE})
-
-find_package(catkin REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
