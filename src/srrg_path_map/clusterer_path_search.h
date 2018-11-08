@@ -7,6 +7,7 @@ namespace srrg_core {
   class ClustererPathSearch: public BasePathSearch {
   public:
     struct Cluster{
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
       PathMapCell* cell;
       Eigen::Vector2i lower;
       Eigen::Vector2i upper;
@@ -14,9 +15,9 @@ namespace srrg_core {
       float mean_c;
       int point_count;
       cv::Vec3b color;
-      std::vector<Eigen::Vector2i> pixels;
+      Vector2iVector pixels;
     };
-    typedef std::vector<Cluster> ClusterVector;
+    typedef std::vector<Cluster, Eigen::aligned_allocator<Cluster> > ClusterVector;
     ClustererPathSearch();
     
 

@@ -93,7 +93,7 @@ namespace srrg_core {
     if(cell->c > c_max)
       c_max = cell->c;
 
-    std::vector<Eigen::Vector2i> pixels;
+    Vector2iVector pixels;
     
     int count=1;
     while (! queue.empty()){
