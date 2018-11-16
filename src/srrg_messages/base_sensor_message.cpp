@@ -51,6 +51,7 @@ namespace srrg_core {
   void  BaseSensorMessage::toStream(std::ostream& os) const {
     BaseMessage::toStream(os);
     char buf[1024];
+    std::setlocale(LC_NUMERIC, "en_US.UTF-8");
     sprintf(buf, "%s %s %08d %.5lf", _topic.c_str(), _frame_id.c_str(), _seq, _timestamp);
     os << buf;
     os << " ";
