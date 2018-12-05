@@ -8,7 +8,9 @@
 #if CV_MAJOR_VERSION == 2
   //ds no specifics
 #elif CV_MAJOR_VERSION == 3
+  #ifdef SRRG_CORE_HAS_OPENCV_CONTRIB
   #include <opencv2/xfeatures2d.hpp>
+  #endif
 #else
   #error OpenCV version not supported
 #endif
