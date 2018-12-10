@@ -37,13 +37,13 @@ namespace srrg_core {
     is >> _has_odom;
     if (_has_odom) {
       for(int i=0;i<v.rows(); i++)      
-	is >> v(i);
+        is >> v(i);
       _odometry = v2t(v);
     }
     is >> _has_imu;
     if (_has_imu) {
       for(int i=0;i<v.rows(); i++)      
-	is >> v(i);
+        is >> v(i);
       _imu = v2t(v);
     }
   }

@@ -25,12 +25,6 @@ namespace srrg_core {
   //!a vector of Matrix2f with alignment
   typedef std::vector<Eigen::Matrix2f, Eigen::aligned_allocator<Eigen::Matrix2f> > Matrix2fVector;
 
-  //!a 4x3 float matrix
-  typedef Eigen::Matrix<float, 4, 3> Matrix4_3f;
-
-  //!a 4x6 float matrix
-  typedef Eigen::Matrix<float, 4, 6> Matrix4_6f;
-
   //!a 2x6 float matrix
   typedef Eigen::Matrix<float, 2, 6> Matrix2_6f;
 
@@ -40,6 +34,18 @@ namespace srrg_core {
   //!a 3x6 double matrix
   typedef Eigen::Matrix<double, 3, 6> Matrix3_6d;
 
+  //!a 4x3 float matrix
+  typedef Eigen::Matrix<float, 4, 3> Matrix4_3f;
+
+  //!a 4x6 float matrix
+  typedef Eigen::Matrix<float, 4, 6> Matrix4_6f;
+
+  //!a 5x2 float matrix
+  typedef Eigen::Matrix<float, 5, 2> Matrix5_2f;  
+
+  //!a 5x6 float matrix
+  typedef Eigen::Matrix<float, 5, 6> Matrix5_6f;
+  
   //!a 5x5 float matrix
   typedef Eigen::Matrix<float, 5, 5> Matrix5f;
 
@@ -49,6 +55,9 @@ namespace srrg_core {
   //!a 6x6 double matrix
   typedef Eigen::Matrix<double, 6, 6> Matrix6d;
 
+  //!a 6   float vector
+  typedef Eigen::Matrix<float, 5, 1> Vector5f;
+  
   //!a 6   float vector
   typedef Eigen::Matrix<float, 6, 1> Vector6f;
   
