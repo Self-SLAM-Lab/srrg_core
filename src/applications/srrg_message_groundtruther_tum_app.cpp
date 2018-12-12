@@ -47,10 +47,10 @@ int main(int argc, char** argv) {
   while ((msg_base=reader.readMessage())) {
     msg_base->untaint();
     if(!msg_base)
-      throw std::runtime_error("PORCO DIO");
+      throw std::runtime_error("[MsgBase unrecognized]");
     BaseImageMessage* msg_img = dynamic_cast<BaseImageMessage*>(msg_base);
     if(!msg_img)
-      throw std::runtime_error("PORCA MADONNA");
+      throw std::runtime_error("[BaseImgMsg unrecognized]");
 
     synchronizer.putMessage(msg_img);
     if (!synchronizer.messagesReady())
@@ -96,7 +96,7 @@ void loadGT(TimePoseMap& time_pose, const std::string gt_filename) {
             >> qy
             >> qz
             >> qw))
-        {std::cerr << "PORCO DIO" << std::endl;
+        {std::cerr << "[LoadGT]: WRONG LINE" << std::endl;
           break; }
       Vector6f pose;
       pose << x, y, z, qx, qy, qz;
@@ -112,8 +112,9 @@ Vector6f getClosestPose(const TimePoseMap& time_pose, const double& current_time
   TimePoseMap::const_iterator it = time_pose.lower_bound(current_time);
   if(it != time_pose.begin()) {
     --it;
-    return it->second;
-    // it now points at the right element
+  } else {
+    std::cerr << "[getClosestPose]: Missing Some GT. Adding the first/closest" << std::endl;
   }
-  throw std::runtime_error("MANNAGGIA CRISTO");
+  return it->second;
+
 }
