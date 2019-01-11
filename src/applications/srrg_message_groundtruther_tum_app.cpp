@@ -67,8 +67,9 @@ int main(int argc, char** argv) {
     if(!msg_base)
       throw std::runtime_error("[MsgBase unrecognized]");
     BaseImageMessage* msg_img = dynamic_cast<BaseImageMessage*>(msg_base);
-    if(!msg_img)
-      throw std::runtime_error("[BaseImgMsg unrecognized]");
+    if(!msg_img) {
+      continue;
+    }
 
     synchronizer.putMessage(msg_img);
     if (!synchronizer.messagesReady())
