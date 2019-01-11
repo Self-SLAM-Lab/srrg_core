@@ -4,6 +4,8 @@
 #include <srrg_messages/sensor_message_sorter.h>
 #include <srrg_messages/message_timestamp_synchronizer.h>
 
+#include <srrg_system_utils/system_utils.h>
+
 #include <sstream>
 
 using namespace srrg_core;
@@ -15,16 +17,32 @@ typedef std::pair<double, Vector6f> TimePosePair;
 void loadGT(TimePoseMap& time_pose, const std::string gt_filename);
 Vector6f getClosestPose(const TimePoseMap& time_pose, const double& current_time);
 
+
+const char* banner [] = {
+  "srrg_message_groundtruther_tum_app for txtio files",
+  "",
+  "this app adds the data that you pass through the <odometry-gt.txt> file to the txtio dataset selected",
+  "<odometry-gt.txt> can contain either ground thruth or odometry but must be in TUM format",
+  "that data will populate the <odom> field of the ImageMessage",
+  "usage: srrg_message_groundtruther_tum_app <depth-topic> <rgb-topic> <odometry-gt.txt> <input.txtio> <output.txtio>",
+  0
+};
+
+
 int main(int argc, char** argv) {
 
-  if (argc < 4)
-    throw std::runtime_error("the app requires a dataset file\nusage: <executable> <groundtruth.txt> <txtio_file> <output_txtio_file>");
-    
-  std::string groundtruth(argv[1]);
-  std::string filename(argv[2]);
-  std::string output_filename(argv[3]);
-  const std::string depth_topic = "/camera/depth/image";
-  const std::string rgb_topic = "/camera/rgb/image_color";
+  if (argc < 6 || !strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
+    srrg_core::printBanner(banner);
+    throw std::runtime_error("exiting");
+  }
+
+  // const std::string depth_topic = "/camera/depth/image";
+  // const std::string rgb_topic = "/camera/rgb/image_color";
+  std::string depth_topic(argv[1]);
+  std::string rgb_topic(argv[2]);
+  std::string groundtruth(argv[3]);
+  std::string filename(argv[4]);
+  std::string output_filename(argv[5]);
   const float time_interval = 0.03;
   
   srrg_core::MessageReader reader(TXTIO);
