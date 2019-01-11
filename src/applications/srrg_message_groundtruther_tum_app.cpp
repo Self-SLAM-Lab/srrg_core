@@ -36,17 +36,25 @@ int main(int argc, char** argv) {
     throw std::runtime_error("exiting");
   }
 
-  // const std::string depth_topic = "/camera/depth/image";
-  // const std::string rgb_topic = "/camera/rgb/image_color";
   std::string depth_topic(argv[1]);
   std::string rgb_topic(argv[2]);
   std::string groundtruth(argv[3]);
   std::string filename(argv[4]);
   std::string output_filename(argv[5]);
   const float time_interval = 0.03;
+
+  std::cerr << std::endl;
+  std::cerr << "==============" << std::endl;
+  std::cerr << "depth topic:  \t" << depth_topic << std::endl;
+  std::cerr << "rgb topic:    \t" << rgb_topic << std::endl;
+  std::cerr << "groundtruth:  \t" << groundtruth << std::endl;
+  std::cerr << "filename:     \t" << filename << std::endl;
+  std::cerr << "out filename: \t" << output_filename << std::endl;
+  std::cerr << "==============" << std::endl;
+  std::cerr << std::endl;
   
   srrg_core::MessageReader reader(TXTIO);
-  srrg_core::MessageWriter writer(TXTIO);
+  srrg_core::MessageWriter* writer = new srrg_core::MessageWriter(TXTIO);
   srrg_core::MessageTimestampSynchronizer synchronizer;
 
   std::vector<std::string> depth_plus_rgb_topic;
@@ -59,7 +67,7 @@ int main(int argc, char** argv) {
   loadGT(time_pose_map, groundtruth);
   reader.open(filename);
 
-  writer.open(output_filename);
+  writer->open(output_filename);
   
   BaseMessage* msg_base = 0;    
   while ((msg_base=reader.readMessage())) {
@@ -78,16 +86,18 @@ int main(int argc, char** argv) {
     PinholeImageMessage* msg_img_depth = dynamic_cast<PinholeImageMessage*>(synchronizer.messages()[0].get());;
     PinholeImageMessage* msg_img_rgb = dynamic_cast<PinholeImageMessage*>(synchronizer.messages()[1].get());
     double timestamp = msg_img_rgb->timestamp();
-    Vector6f gt_pose =  getClosestPose(time_pose_map, timestamp);
+    Vector6f gt_pose = getClosestPose(time_pose_map, timestamp);
 
     msg_img_depth->setOdometry(srrg_core::v2t(gt_pose));
     msg_img_rgb->setOdometry(srrg_core::v2t(gt_pose));
-    writer.writeMessage(*msg_img_depth);
-    writer.writeMessage(*msg_img_rgb);
+    writer->writeMessage(*msg_img_depth);
+    writer->writeMessage(*msg_img_rgb);
+
   }
 
   reader.close();
-  writer.close();
+  writer->close();
+  delete writer;
   
   return 0;
 }
