@@ -107,22 +107,22 @@ void generateScan(std::vector<int> ranges,
 
 
 static void mouseEventHandler( int event, int x, int y, int flags, void* userdata) {
-  if (!paint_brush && event==cv::EVENT_LBUTTONDOWN){
+  if (!paint_brush && event==cv::EVENT_LBUTTONDOWN && ((flags & cv::EVENT_FLAG_CTRLKEY) != 0)){
     origins.push_back(Eigen::Vector2i(y,x));
     cerr << "Adding goal [" << origins.size() << " " << y << " " << x << "]" << endl;
   }
-  if (!paint_brush && event==cv::EVENT_RBUTTONDOWN){
+  if (!paint_brush && event==cv::EVENT_RBUTTONDOWN && ((flags & cv::EVENT_FLAG_CTRLKEY) != 0)){
     goal = Eigen::Vector2i(y,x);
     cerr << "Adding pose [ " << y << " " << x << "]" << endl;
   }
-  if (paint_brush && event== cv::EVENT_LBUTTONDOWN){
+  if (paint_brush && event== cv::EVENT_LBUTTONDOWN && ((flags & cv::EVENT_FLAG_CTRLKEY) != 0)){
     cerr << "Starting to draw" << endl;
     drawing = true;
     previous_pixel_values.push_back(gray_map.at<unsigned char>(y,x));
     gray_map.at<unsigned char>(y,x) = (unsigned char) 0;
     obstacle_points.push_back(Eigen::Vector2i(y,x));
   }
-  if (paint_brush && event==cv::EVENT_LBUTTONUP){
+  if (paint_brush && event==cv::EVENT_LBUTTONUP && ((flags & cv::EVENT_FLAG_CTRLKEY) != 0)){
     //This point is already included in MOUSEMOVE
     drawing = false;
     recompute_occupancy=true;
@@ -289,7 +289,7 @@ int main(int argc, char** argv){
   int voronoi_incidence_int=500;
   cv::createTrackbar("voronoi_incidence_int", "controls", &voronoi_incidence_int, 1000, onDistanceTrackbar);
 
-  cvNamedWindow("path");
+  cvNamedWindow("path", cv::WINDOW_NORMAL);
   int max_cost_int=max_cost;
   cv::createTrackbar("max_cost", "controls", &max_cost_int, 10000, onCostTrackbar);
 
@@ -316,7 +316,9 @@ int main(int argc, char** argv){
   bool run=true;
   goal.x()=-1;
   goal.y()=-1;
-  
+
+  cerr << "Press CTRL+Left click to place a goal, CTRL+Right click to place a origin." << endl;
+
   while(run) {
 
     if (recompute_occupancy) {
