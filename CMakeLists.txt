@@ -93,3 +93,6 @@ link_directories(${catkin_LIBRARY_DIRS})
 
 #ds add source
 add_subdirectory(${PROJECT_SOURCE_DIR}/src)
+
+#ia print all the flags
+message("${PROJECT_NAME}|compiling with these flags [ ${CMAKE_CXX_FLAGS} ]")
