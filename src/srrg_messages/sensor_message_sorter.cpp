@@ -7,15 +7,19 @@ namespace srrg_core{
     _sorter = sorter_;
     _priority = priority_;
     std::map<int, Trigger*>::iterator it = _sorter->_triggers.find(priority_);
-    if(it!=_sorter->_triggers.end())
-      throw std::runtime_error("cannot allocate a trigger with the same priority");
+    if(it!=_sorter->_triggers.end()) {
+      std::cerr << "SensorMessageSorter::Trigger::Trigger|cannot allocate a trigger with the same priority\n";
+      exit(EXIT_FAILURE);
+    }
     _sorter->_triggers.insert(std::make_pair(priority(), this));
   }
 
   SensorMessageSorter::Trigger::~Trigger() {
     std::map<int, Trigger*>::iterator it = _sorter->_triggers.find(_priority);
-    if(it==_sorter->_triggers.end())
-      throw std::runtime_error("error in delete");
+    if(it==_sorter->_triggers.end()) {
+      std::cerr << "SensorMessageSorter::Trigger::Trigger|error in delete\n";
+      exit(EXIT_FAILURE);
+    }
     _sorter->_triggers.erase(it);
   }
 
