@@ -10,7 +10,7 @@
 
 using namespace srrg_core;
 
-typedef std::map<double, Vector6f, std::less<double>, Eigen::aligned_allocator<Vector6f>> TimePoseMap;
+typedef std::map<double, Vector6f, std::less<double>, Eigen::aligned_allocator<std::pair<const double, Vector6f>>> TimePoseMap;
 typedef std::pair<double, Vector6f> TimePosePair;
 
 

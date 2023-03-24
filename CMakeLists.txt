@@ -47,6 +47,9 @@ if(NOT ${FOUND_OPENCV_CONTRIB} EQUAL -1)
   add_definitions(-DSRRG_CORE_HAS_OPENCV_CONTRIB)
 endif()
 
+#disable eigen alignment
+add_definitions(-DEIGEN_DONT_ALIGN)
+
 # Find Eigen3
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
